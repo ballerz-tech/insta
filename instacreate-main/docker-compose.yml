@@ -1,0 +1,13 @@
+services:
+  webproxy:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./data:/app/server/data
+      - ./selenium_profiles:/app/selenium_profiles
+    environment:
+      - NODE_ENV=production
+      - CHROMEDRIVER_PATH=/usr/bin/chromedriver
+    restart: unless-stopped
+    container_name: webproxy-app

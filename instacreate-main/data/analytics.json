@@ -1,0 +1,13 @@
+{
+  "sessions": [],
+  "stats": {
+    "totalSessions": 0,
+    "activeProfiles": 0,
+    "avgSessionTime": 0,
+    "countries": 0
+  },
+  "instagramFollows": {
+    "totalSuccessful": 0,
+    "history": []
+  }
+}
