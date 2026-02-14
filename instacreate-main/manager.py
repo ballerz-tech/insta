@@ -15,7 +15,7 @@ import urllib.parse
 
 # --- CONFIGURATION ---
 # Use environment variable for Docker compatibility
-CHROMEDRIVER_PATH = os.environ.get('CHROMEDRIVER_PATH', 'chromedriver')
+CHROMEDRIVER_PATH = os.environ.get('chromedriver.exe', 'chromedriver')
 PROFILES_DIR = "./selenium_profiles"
 PROFILE_CONFIG_FILE = os.path.join(PROFILES_DIR, "profiles.json")
 
