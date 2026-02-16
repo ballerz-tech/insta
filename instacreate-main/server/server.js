@@ -158,6 +158,50 @@ app.post('/api/profiles', authenticateToken, checkPermission('create_profiles'),
     });
 });
 
+// API to update a profile's status (e.g., mark banned/active)
+app.post('/api/profiles/status', authenticateToken, checkPermission('create_profiles'), (req, res) => {
+    const { name, status } = req.body;
+    console.log('[DEBUG] /api/profiles/status called with body:', req.body);
+    // Possible locations where profiles.json may live (server cwd vs repo root)
+    const candidatePaths = [
+        path.resolve(__dirname, 'selenium_profiles', 'profiles.json'),
+        path.resolve(__dirname, '..', 'selenium_profiles', 'profiles.json')
+    ];
+
+    try {
+        let updated = false;
+        for (const profilesPath of candidatePaths) {
+            console.log(`[DEBUG] checking path: ${profilesPath} exists=${fs.existsSync(profilesPath)}`);
+            if (!fs.existsSync(profilesPath)) continue;
+            let profilesRaw = fs.readFileSync(profilesPath, 'utf8');
+            let profiles = {};
+            try {
+                profiles = JSON.parse(profilesRaw || '{}');
+                console.log(`[DEBUG] parsed profiles keys at ${profilesPath}:`, Object.keys(profiles));
+            } catch (e) {
+                console.error(`Failed to parse profiles at ${profilesPath}:`, e);
+                continue;
+            }
+            if (!profiles[name]) {
+                console.log(`[DEBUG] profile '${name}' not found in ${profilesPath}`);
+                continue;
+            }
+            profiles[name].status = status;
+            fs.writeFileSync(profilesPath, JSON.stringify(profiles, null, 2));
+            console.log(`Updated profile '${name}' status to '${status}' in ${profilesPath}`);
+            res.json({ message: `Profile '${name}' status updated to '${status}'`, path: profilesPath });
+            updated = true;
+            break;
+        }
+        if (!updated) {
+            return res.status(404).json({ error: `Profile '${name}' not found` });
+        }
+    } catch (error) {
+        console.error('Error updating profile status:', error);
+        res.status(500).json({ error: 'Failed to update profile status' });
+    }
+});
+
 app.get('/api/status', authenticateToken, (req, res) => {
     res.json(Array.from(runningProcesses.keys()));
 });
@@ -354,21 +398,22 @@ app.post('/api/profiles/bulk-delete', authenticateToken, checkPermission('delete
 // Instagram automation
 app.post('/api/automation/instagram-follow', authenticateToken, checkPermission('use_profiles'), (req, res) => {
     const { target, count } = req.body;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'instagram-follow', '--target', target, '--count', count.toString()]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `Instagram automation completed for ${count} profiles.` });
-        } else {
-            console.error('Instagram automation error:', errorOutput);
-            res.status(500).json({ error: 'Instagram automation failed', details: errorOutput });
-        }
-    });
+    try {
+        // Start the python automation in detached mode so the server can return immediately
+        const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'instagram-follow', '--target', target, '--count', count.toString()], {
+            detached: true,
+            stdio: ['ignore', 'ignore', 'ignore']
+        });
+
+        // Unref so the child can continue after the parent exits
+        pythonProcess.unref();
+
+        // Return immediately to allow client to poll analytics during the run
+        res.status(202).json({ message: `Instagram automation started for ${count} profiles.`, pid: pythonProcess.pid });
+    } catch (err) {
+        console.error('Failed to start instagram automation:', err);
+        res.status(500).json({ error: 'Failed to start instagram automation' });
+    }
 });
 
 // Groups API
@@ -379,12 +424,83 @@ app.get('/api/groups', authenticateToken, checkPermission('create_profiles'), (r
 
 app.post('/api/groups', authenticateToken, checkPermission('create_profiles'), (req, res) => {
     const groups = readJsonFile(GROUPS_FILE, []);
-    const newGroup = { id: Date.now().toString(), ...req.body, createdAt: new Date().toISOString() };
+    const newGroup = { 
+        id: Date.now().toString(), 
+        ...req.body, 
+        profiles: [],
+        createdAt: new Date().toISOString() 
+    };
     groups.push(newGroup);
     if (writeJsonFile(GROUPS_FILE, groups)) {
         res.status(201).json(newGroup);
     } else {
         res.status(500).json({ error: 'Failed to create group' });
+    }
+});
+
+app.delete('/api/groups/:id', authenticateToken, checkPermission('create_profiles'), (req, res) => {
+    const groups = readJsonFile(GROUPS_FILE, []);
+    const filteredGroups = groups.filter(g => g.id !== req.params.id);
+    if (writeJsonFile(GROUPS_FILE, filteredGroups)) {
+        res.json({ message: 'Group deleted successfully' });
+    } else {
+        res.status(500).json({ error: 'Failed to delete group' });
+    }
+});
+
+app.get('/api/groups/:id/profiles', authenticateToken, checkPermission('create_profiles'), (req, res) => {
+    const groups = readJsonFile(GROUPS_FILE, []);
+    const group = groups.find(g => g.id === req.params.id);
+    if (group) {
+        res.json(group.profiles || []);
+    } else {
+        res.status(404).json({ error: 'Group not found' });
+    }
+});
+
+app.post('/api/groups/:id/assign', authenticateToken, checkPermission('create_profiles'), (req, res) => {
+    console.log('[DEBUG] Assign profiles endpoint called - Group ID:', req.params.id, 'Body:', req.body);
+    const groups = readJsonFile(GROUPS_FILE, []);
+    const groupIndex = groups.findIndex(g => g.id === req.params.id);
+    console.log('[DEBUG] Group found at index:', groupIndex);
+    if (groupIndex === -1) {
+        return res.status(404).json({ error: 'Group not found' });
+    }
+    const { profiles } = req.body;
+    if (!Array.isArray(profiles)) {
+        return res.status(400).json({ error: 'Profiles must be an array' });
+    }
+    // Add profiles to the group (avoid duplicates)
+    const existingProfiles = groups[groupIndex].profiles || [];
+    groups[groupIndex].profiles = [...new Set([...existingProfiles, ...profiles])];
+    console.log('[DEBUG] Updated profiles for group:', groups[groupIndex].profiles);
+    
+    if (writeJsonFile(GROUPS_FILE, groups)) {
+        console.log('[DEBUG] Successfully saved groups file');
+        res.json({ message: 'Profiles assigned successfully', group: groups[groupIndex] });
+    } else {
+        console.error('[DEBUG] Failed to write groups file');
+        res.status(500).json({ error: 'Failed to assign profiles' });
+    }
+});
+
+app.post('/api/groups/:id/remove', authenticateToken, checkPermission('create_profiles'), (req, res) => {
+    const groups = readJsonFile(GROUPS_FILE, []);
+    const groupIndex = groups.findIndex(g => g.id === req.params.id);
+    if (groupIndex === -1) {
+        return res.status(404).json({ error: 'Group not found' });
+    }
+    const { profile } = req.body;
+    if (!profile) {
+        return res.status(400).json({ error: 'Profile name required' });
+    }
+    // Remove profile from the group
+    groups[groupIndex].profiles = (groups[groupIndex].profiles || []).filter(p => p !== profile);
+    
+    if (writeJsonFile(GROUPS_FILE, groups)) {
+        res.json({ message: 'Profile removed successfully', group: groups[groupIndex] });
+    } else {
+        res.status(500).json({ error: 'Failed to remove profile' });
     }
 });
 

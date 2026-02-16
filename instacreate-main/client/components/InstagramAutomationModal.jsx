@@ -6,6 +6,8 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
   const [profileCount, setProfileCount] = useState(1);
   const [isRunning, setIsRunning] = useState(false);
   const [followStats, setFollowStats] = useState({ totalSuccessful: 0, history: [] });
+  const [initialSuccessful, setInitialSuccessful] = useState(0);
+  const [poller, setPoller] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,23 +24,55 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
 
     setIsRunning(true);
     try {
+      // Capture initial count
+      const stats = await fetchFollowStats();
+      setInitialSuccessful((stats && stats.totalSuccessful) || 0);
+
+      // Start automation (server now returns immediately)
       await onSubmit(targetUsername.replace('@', ''), profileCount);
+
+      // Start polling analytics every second to reflect live updates
+      let attempts = 0;
+      const maxAttempts = Math.max(60, profileCount * 5); // stop after reasonable time
+      const interval = setInterval(async () => {
+        attempts += 1;
+        const statsNow = await fetchFollowStats();
+        const current = (statsNow && statsNow.totalSuccessful) || 0;
+        // If we've seen the expected number of new successes, stop polling
+        if (current >= (initialSuccessful + profileCount) || attempts >= maxAttempts) {
+          clearInterval(interval);
+          setPoller(null);
+          setIsRunning(false);
+          // Optionally close modal when finished
+          // onClose();
+        }
+      }, 1000);
+      setPoller(interval);
       alert(`Automation started! ${profileCount} profiles will follow @${targetUsername}`);
-      fetchFollowStats(); // Refresh stats after automation
-      onClose();
     } catch (error) {
       alert('Failed to start automation: ' + error.message);
-    } finally {
       setIsRunning(false);
     }
   };
 
   const fetchFollowStats = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/analytics');
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/analytics', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          // auth expired or invalid; stop polling silently
+          console.warn('Analytics fetch unauthorized (401)');
+          return null;
+        }
+        return null;
+      }
       const data = await response.json();
       if (data.instagramFollows) {
         setFollowStats(data.instagramFollows);
+        return data.instagramFollows;
       }
     } catch (error) {
       console.error('Failed to fetch follow stats:', error);
@@ -50,6 +84,13 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
       fetchFollowStats();
     }
   }, [isOpen]);
+
+  // cleanup poller when modal closes
+  useEffect(() => {
+    return () => {
+      if (poller) clearInterval(poller);
+    };
+  }, [poller]);
 
   const resetForm = () => {
     setTargetUsername('');
@@ -66,8 +107,8 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-md text-gray-200">
-        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-md text-gray-200 max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-6 border-b border-gray-700 flex-shrink-0">
           <div className="flex items-center space-x-2">
             <Instagram className="text-pink-500" size={24} />
             <h2 className="text-xl font-bold">Instagram Follow Automation</h2>
@@ -77,7 +118,8 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">
@@ -156,7 +198,9 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
             </ul>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+          </div>
+
+          <div className="flex justify-end space-x-3 p-6 pt-4 border-t border-gray-700 flex-shrink-0 bg-[#1e2024]">
             <button
               type="button"
               onClick={handleClose}

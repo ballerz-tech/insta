@@ -62,22 +62,22 @@ const Settings = () => {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Settings</h1>
-        <p className="text-gray-400 mt-1">Configure your application preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-600 mt-1">Configure your application preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* General Settings */}
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+        <div className="bg-white border border-gray-300 shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <Monitor className="text-blue-400 mr-3" size={24} />
-            <h2 className="text-xl font-semibold text-white">General</h2>
+            <Monitor className="text-blue-600 mr-3" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">General</h2>
           </div>
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-white font-medium">Dark Mode</label>
-                <p className="text-gray-400 text-sm">Use dark theme interface</p>
+                <label className="text-gray-900 font-medium">Dark Mode</label>
+                <p className="text-gray-600 text-sm">Use dark theme interface</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -86,14 +86,14 @@ const Settings = () => {
                   onChange={(e) => handleChange('darkMode', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-white font-medium">Auto Start</label>
-                <p className="text-gray-400 text-sm">Start application on system boot</p>
+                <label className="text-gray-900 font-medium">Auto Start</label>
+                <p className="text-gray-600 text-sm">Start application on system boot</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -102,16 +102,16 @@ const Settings = () => {
                   onChange={(e) => handleChange('autoStart', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
             <div>
-              <label className="block text-white font-medium mb-2">Language</label>
+              <label className="block text-gray-900 font-medium mb-2">Language</label>
               <select
                 value={settings.language}
                 onChange={(e) => handleChange('language', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
@@ -121,12 +121,12 @@ const Settings = () => {
             </div>
 
             <div>
-              <label className="block text-white font-medium mb-2">Session Timeout (minutes)</label>
+              <label className="block text-gray-900 font-medium mb-2">Session Timeout (minutes)</label>
               <input
                 type="number"
                 value={settings.sessionTimeout}
                 onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 min="5"
                 max="120"
               />
@@ -135,41 +135,41 @@ const Settings = () => {
         </div>
 
         {/* Security Settings */}
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+        <div className="bg-white border border-gray-300 shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <Shield className="text-green-400 mr-3" size={24} />
-            <h2 className="text-xl font-semibold text-white">Security</h2>
+            <Shield className="text-green-600 mr-3" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Security</h2>
           </div>
           <div className="space-y-6">
             <div>
-              <label className="block text-white font-medium mb-2">Default Proxy</label>
+              <label className="block text-gray-900 font-medium mb-2">Default Proxy</label>
               <input
                 type="text"
                 value={settings.defaultProxy}
                 onChange={(e) => handleChange('defaultProxy', e.target.value)}
                 placeholder="http://proxy.example.com:8080"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               />
-              <p className="text-gray-400 text-sm mt-1">Default proxy for new profiles</p>
+              <p className="text-gray-600 text-sm mt-1">Default proxy for new profiles</p>
             </div>
 
             <div>
-              <label className="block text-white font-medium mb-2">Max Profiles</label>
+              <label className="block text-gray-900 font-medium mb-2">Max Profiles</label>
               <input
                 type="number"
                 value={settings.maxProfiles}
                 onChange={(e) => handleChange('maxProfiles', parseInt(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 min="1"
                 max="1000"
               />
-              <p className="text-gray-400 text-sm mt-1">Maximum number of profiles allowed</p>
+              <p className="text-gray-600 text-sm mt-1">Maximum number of profiles allowed</p>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-white font-medium">Auto Backup</label>
-                <p className="text-gray-400 text-sm">Automatically backup profile data</p>
+                <label className="text-gray-900 font-medium">Auto Backup</label>
+                <p className="text-gray-600 text-sm">Automatically backup profile data</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -178,18 +178,18 @@ const Settings = () => {
                   onChange={(e) => handleChange('autoBackup', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
             {settings.autoBackup && (
               <div>
-                <label className="block text-white font-medium mb-2">Backup Interval (hours)</label>
+                <label className="block text-gray-900 font-medium mb-2">Backup Interval (hours)</label>
                 <input
                   type="number"
                   value={settings.backupInterval}
                   onChange={(e) => handleChange('backupInterval', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   min="1"
                   max="168"
                 />
@@ -199,16 +199,16 @@ const Settings = () => {
         </div>
 
         {/* Notifications */}
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+        <div className="bg-white border border-gray-300 shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <Bell className="text-yellow-400 mr-3" size={24} />
-            <h2 className="text-xl font-semibold text-white">Notifications</h2>
+            <Bell className="text-yellow-600 mr-3" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
           </div>
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-white font-medium">Enable Notifications</label>
-                <p className="text-gray-400 text-sm">Receive system notifications</p>
+                <label className="text-gray-900 font-medium">Enable Notifications</label>
+                <p className="text-gray-600 text-sm">Receive system notifications</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -217,29 +217,29 @@ const Settings = () => {
                   onChange={(e) => handleChange('notifications', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
           </div>
         </div>
 
         {/* Data Management */}
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+        <div className="bg-white border border-gray-300 shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <Database className="text-purple-400 mr-3" size={24} />
-            <h2 className="text-xl font-semibold text-white">Data Management</h2>
+            <Database className="text-purple-600 mr-3" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Data Management</h2>
           </div>
           <div className="space-y-4">
-            <button className="w-full px-4 py-3 bg-blue-600/20 text-blue-300 rounded-lg hover:bg-blue-600/30 transition-colors text-left">
+            <button className="w-full px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-left">
               Export Profile Data
             </button>
-            <button className="w-full px-4 py-3 bg-green-600/20 text-green-300 rounded-lg hover:bg-green-600/30 transition-colors text-left">
+            <button className="w-full px-4 py-3 bg-gray-600 text-white hover:bg-gray-700 transition-colors text-left">
               Import Profile Data
             </button>
-            <button className="w-full px-4 py-3 bg-yellow-600/20 text-yellow-300 rounded-lg hover:bg-yellow-600/30 transition-colors text-left">
+            <button className="w-full px-4 py-3 bg-yellow-600 text-white hover:bg-yellow-700 transition-colors text-left">
               Clear Cache
             </button>
-            <button className="w-full px-4 py-3 bg-red-600/20 text-red-300 rounded-lg hover:bg-red-600/30 transition-colors text-left">
+            <button className="w-full px-4 py-3 bg-red-600 text-white hover:bg-red-700 transition-colors text-left">
               Reset All Settings
             </button>
           </div>
@@ -250,7 +250,7 @@ const Settings = () => {
       <div className="mt-8 flex justify-end">
         <button
           onClick={handleSave}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Save size={20} />
           <span>Save Settings</span>

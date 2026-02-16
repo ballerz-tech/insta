@@ -35,8 +35,8 @@ const Analytics = () => {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Analytics Dashboard</h1>
-        <p className="text-gray-400 mt-1">Monitor your browser profile usage and performance</p>
+        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <p className="text-gray-600 mt-1">Monitor your browser profile usage and performance</p>
       </div>
 
       {/* Stats Grid */}
@@ -44,23 +44,23 @@ const Analytics = () => {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           const colorClasses = {
-            blue: 'from-blue-500 to-blue-600 bg-blue-500/20 text-blue-400',
-            green: 'from-green-500 to-green-600 bg-green-500/20 text-green-400',
-            purple: 'from-purple-500 to-purple-600 bg-purple-500/20 text-purple-400',
-            orange: 'from-orange-500 to-orange-600 bg-orange-500/20 text-orange-400'
+            blue: 'from-blue-500 to-blue-600 bg-blue-500/20 text-blue-600',
+            green: 'from-green-500 to-green-600 bg-green-500/20 text-green-600',
+            purple: 'from-purple-500 to-purple-600 bg-purple-500/20 text-purple-600',
+            orange: 'from-orange-500 to-orange-600 bg-orange-500/20 text-orange-600'
           };
           
           return (
-            <div key={index} className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-2xl border border-slate-600/50 shadow-xl">
+            <div key={index} className="bg-white border border-gray-300 p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClasses[stat.color].split(' ').slice(2).join(' ')}`}>
+                <div className={`w-12 h-12 flex items-center justify-center ${colorClasses[stat.color].split(' ').slice(2).join(' ')}`}>
                   <Icon size={24} />
                 </div>
-                <span className="text-green-400 text-sm font-medium">{stat.change}</span>
+                <span className="text-green-600 text-sm font-medium">{stat.change}</span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
-                <p className="text-gray-400 text-sm">{stat.label}</p>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</p>
+                <p className="text-gray-600 text-sm">{stat.label}</p>
               </div>
             </div>
           );
@@ -69,26 +69,26 @@ const Analytics = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Usage Chart */}
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+        <div className="bg-white border border-gray-300 shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Usage Overview</h2>
-            <BarChart3 className="text-gray-400" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Usage Overview</h2>
+            <BarChart3 className="text-gray-600" size={24} />
           </div>
           <div className="space-y-4">
             {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => {
               const usage = Math.floor(Math.random() * 100);
               return (
                 <div key={day} className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm w-20">{day}</span>
+                  <span className="text-gray-700 text-sm w-20">{day}</span>
                   <div className="flex-1 mx-4">
-                    <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="w-full bg-gray-200 h-2">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                        className="bg-blue-600 h-2 transition-all duration-500"
                         style={{ width: `${usage}%` }}
                       ></div>
                     </div>
                   </div>
-                  <span className="text-gray-400 text-sm w-12 text-right">{usage}%</span>
+                  <span className="text-gray-600 text-sm w-12 text-right">{usage}%</span>
                 </div>
               );
             })}
@@ -96,22 +96,22 @@ const Analytics = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+        <div className="bg-white border border-gray-300 shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
-            <TrendingUp className="text-gray-400" size={24} />
+            <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
+            <TrendingUp className="text-gray-600" size={24} />
           </div>
           <div className="space-y-4">
             {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-700/30 transition-colors">
+              <div key={index} className="flex items-center space-x-4 p-3 hover:bg-gray-50 transition-colors">
                 <div className={`w-3 h-3 rounded-full ${
-                  activity.status === 'success' ? 'bg-green-400' :
-                  activity.status === 'warning' ? 'bg-yellow-400' :
-                  'bg-blue-400'
+                  activity.status === 'success' ? 'bg-green-500' :
+                  activity.status === 'warning' ? 'bg-yellow-500' :
+                  'bg-blue-500'
                 }`}></div>
                 <div className="flex-1">
-                  <p className="text-white text-sm font-medium">{activity.profile}</p>
-                  <p className="text-gray-400 text-xs">{activity.action}</p>
+                  <p className="text-gray-900 text-sm font-medium">{activity.profile}</p>
+                  <p className="text-gray-600 text-xs">{activity.action}</p>
                 </div>
                 <span className="text-gray-500 text-xs">{activity.time}</span>
               </div>
@@ -121,8 +121,8 @@ const Analytics = () => {
       </div>
 
       {/* Browser Distribution */}
-      <div className="mt-8 bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
-        <h2 className="text-xl font-semibold text-white mb-6">Browser Distribution</h2>
+      <div className="mt-8 bg-white border border-gray-300 shadow-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Browser Distribution</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { browser: 'Chrome', percentage: 65, color: 'from-blue-500 to-blue-600' },
@@ -135,7 +135,7 @@ const Analytics = () => {
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="rgb(51 65 85)"
+                    stroke="rgb(229 231 235)"
                     strokeWidth="2"
                   />
                   <path
@@ -153,10 +153,10 @@ const Analytics = () => {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">{item.percentage}%</span>
+                  <span className="text-gray-900 font-bold text-lg">{item.percentage}%</span>
                 </div>
               </div>
-              <p className="text-gray-300 font-medium">{item.browser}</p>
+              <p className="text-gray-700 font-medium">{item.browser}</p>
             </div>
           ))}
         </div>

@@ -153,6 +153,9 @@ def create_profile(name, config=None):
         "startup_urls": config.get("startup_urls", ["https://httpbin.org/ip"])
     }
     
+    # Metadata
+    profiles[name]["created_at"] = time.strftime('%Y-%m-%d %H:%M:%S')
+    profiles[name]["status"] = "active"
     save_profiles(profiles)
     print(f"Success: New profile '{name}' was created.", file=sys.stderr)
     print(f"  - User Agent: {profiles[name]['user_agent']}", file=sys.stderr)
@@ -256,14 +259,83 @@ def launch_profile(name):
         startup_urls = profile_config.get('startup_urls', ["https://httpbin.org/ip"])
         if startup_urls:
             driver.get(startup_urls[0])
-        
+            # remember the startup tab/window so we can detect if the user closed it
+            try:
+                startup_handle = driver.current_window_handle
+            except Exception:
+                startup_handle = None
+
+        # Check for Instagram ban indicators if startup landed on Instagram
+        # Wait a bit for page to load before checking
+        time.sleep(3)
+        try:
+            current_url = driver.current_url or ''
+            page_src = (driver.page_source or '').lower()
+            check_instagram = any('instagram.com' in u for u in startup_urls) or 'instagram.com' in current_url
+            if check_instagram:
+                ban_indicators = [
+                    "account has been disabled",
+                    "this page isn't available",
+                    "page not found",
+                    "sorry, this page isn't available",
+                    "sorry, this page isn't available.",
+                    "account blocked",
+                    "your account has been disabled",
+                    "we restrict access to your account",
+                    "action blocked",
+                    "suspended",
+                    "we suspended your account",
+                    "temporarily blocked",
+                    "help us confirm you own this account",
+                    "confirm your identity"
+                ]
+                if any(ind in page_src for ind in ban_indicators):
+                    print(f"Warning: Detected possible banned/restricted Instagram for profile '{name}'. Marking as banned.", file=sys.stderr)
+                    profiles[name]['status'] = 'banned'
+                    save_profiles(profiles)
+                    try:
+                        driver.quit()
+                    except:
+                        pass
+                    sys.exit(0)
+        except Exception as e:
+            print(f"Warning: Error during ban detection: {e}", file=sys.stderr)
+
         print("Info: Profile launched successfully", file=sys.stderr)
         
-        # Keep browser running
+        # Keep browser running and detect whether Instagram was visited
+        instagram_seen = False
+        # If we stored a startup handle above, use it to detect manual tab close
+        try:
+            startup_handle
+        except NameError:
+            startup_handle = None
         try:
             while True:
                 try:
-                    driver.current_url
+                    cur = ''
+                    try:
+                        cur = driver.current_url or ''
+                    except:
+                        cur = ''
+                    # mark seen if current url is instagram
+                    if 'instagram.com' in cur.lower():
+                        instagram_seen = True
+                    # also check page source occasionally
+                    try:
+                        src = (driver.page_source or '').lower()
+                        if 'instagram.com' in src:
+                            instagram_seen = True
+                    except:
+                        pass
+                    # detect if the startup tab/window was closed by the user
+                    try:
+                        handles = driver.window_handles
+                        if startup_handle and startup_handle not in handles:
+                            print(f"Info: Startup tab for profile '{name}' was closed by user, exiting session.", file=sys.stderr)
+                            break
+                    except Exception:
+                        pass
                     time.sleep(5)
                 except Exception:
                     print("Info: Browser closed manually, exiting process", file=sys.stderr)
@@ -282,6 +354,19 @@ def launch_profile(name):
             pass
         
         driver.quit()
+        # Diagnostic logging and ban decision
+        try:
+            print(f"Debug: SESSION_END - instagram_seen={instagram_seen}", file=sys.stderr)
+            print(f"Debug: Using profiles file: {PROFILE_CONFIG_FILE}", file=sys.stderr)
+            print(f"Debug: Profile exists in loaded profiles: {name in profiles}", file=sys.stderr)
+            if not instagram_seen:
+                print(f"Warning: Instagram not opened during session for profile '{name}'. Marking as banned.", file=sys.stderr)
+                profiles[name]['status'] = 'banned'
+                save_profiles(profiles)
+                print(f"Debug: Profile '{name}' status set to banned and saved.", file=sys.stderr)
+        except Exception as e:
+            print(f"Debug: Error while finalizing session for '{name}': {e}", file=sys.stderr)
+
         print(f"Success: Browser for profile '{name}' closed. Session saved.", file=sys.stderr)
         
     except Exception as e:
@@ -316,13 +401,21 @@ def instagram_follow(target_username, profile_count):
         print("Error: No profiles available.", file=sys.stderr)
         sys.exit(1)
     
-    profile_names = list(profiles.keys())
+    # Filter out banned profiles - only use active accounts
+    active_profiles = {name: config for name, config in profiles.items() 
+                       if config.get('status') != 'banned'}
+    
+    if not active_profiles:
+        print("Error: No active profiles available. All profiles are banned.", file=sys.stderr)
+        sys.exit(1)
+    
+    profile_names = list(active_profiles.keys())
     
     if profile_count > len(profile_names):
-        print(f"Warning: Only {len(profile_names)} profiles available. Using all of them.", file=sys.stderr)
+        print(f"Warning: Only {len(profile_names)} active profiles available. Using all of them.", file=sys.stderr)
         profile_count = len(profile_names)
     
-    # Select random profiles
+    # Select random profiles from active ones only
     selected_profiles = random.sample(profile_names, profile_count)
     
     print(f"Info: Starting Instagram automation for @{target_username}", file=sys.stderr)
@@ -335,16 +428,26 @@ def instagram_follow(target_username, profile_count):
         print(f"Info: Processing profile '{profile_name}'...", file=sys.stderr)
         
         try:
-            profile_config = profiles[profile_name]
+            profile_config = active_profiles[profile_name]
             profile_data_path = os.path.abspath(os.path.join(PROFILES_DIR, profile_name))
             
             chrome_options = Options()
+            
+            # Headless mode for faster execution
+            chrome_options.add_argument("--headless=new")
             
             # Essential Docker options
             if IS_DOCKER:
                 chrome_options.add_argument("--no-sandbox")
                 chrome_options.add_argument("--disable-dev-shm-usage")
                 chrome_options.add_argument("--disable-gpu")
+            
+            # Performance optimizations for speed
+            chrome_options.add_argument("--disable-images")
+            chrome_options.add_argument("--blink-settings=imagesEnabled=false")
+            chrome_options.add_argument("--disable-software-rasterizer")
+            chrome_options.add_argument("--disable-dev-tools")
+            chrome_options.page_load_strategy = 'eager'  # Don't wait for all resources
             
             # Profile settings
             chrome_options.add_argument(f"--user-data-dir={profile_data_path}")
@@ -360,6 +463,7 @@ def instagram_follow(target_username, profile_count):
             
             # Configure proxy if exists
             proxy = profile_config.get("proxy", "").strip()
+            has_proxy_extension = False
             if proxy:
                 if not proxy.startswith(('http://', 'https://', 'socks4://', 'socks5://')):
                     proxy = f'http://{proxy}'
@@ -375,6 +479,11 @@ def instagram_follow(target_username, profile_count):
                         parsed.hostname, parsed.port, parsed.username, parsed.password
                     )
                     chrome_options.add_argument(f'--load-extension={proxy_auth_extension}')
+                    has_proxy_extension = True
+            
+            # Disable extensions only if we don't need proxy auth extension
+            if not has_proxy_extension:
+                chrome_options.add_argument("--disable-extensions")
             
             # Launch browser
             driver = uc.Chrome(options=chrome_options, use_subprocess=False)
@@ -384,8 +493,31 @@ def instagram_follow(target_username, profile_count):
             # Navigate to Instagram
             instagram_url = f"https://www.instagram.com/{target_username}/"
             driver.get(instagram_url)
-            time.sleep(5)  # Wait for page load
-            
+            time.sleep(1)  # Minimal wait for page load
+
+            # Early check for ban indicators
+            page_source = (driver.page_source or '').lower()
+            ban_indicators = [
+                "account has been disabled",
+                "this page isn't available",
+                "page not found",
+                "sorry, this page isn't available",
+                "account blocked",
+                "your account has been disabled",
+                "we restrict access to your account",
+                "action blocked"
+            ]
+            if any(ind in page_source for ind in ban_indicators):
+                print(f"Warning: Detected possible banned Instagram for profile '{profile_name}'. Marking as banned.", file=sys.stderr)
+                profiles[profile_name]['status'] = 'banned'
+                save_profiles(profiles)
+                try:
+                    driver.quit()
+                except:
+                    pass
+                failed += 1
+                continue
+
             # Check if already following or need to login
             page_source = driver.page_source.lower()
             
@@ -394,7 +526,7 @@ def instagram_follow(target_username, profile_count):
                 print(f"Info: Please log in manually, then the automation will continue in 60 seconds.", file=sys.stderr)
                 time.sleep(60)  # Give time for manual login
                 driver.get(instagram_url)
-                time.sleep(5)
+                time.sleep(1)  # Minimal wait after login
             
             # Try to find and click follow button
             try:
@@ -409,14 +541,39 @@ def instagram_follow(target_username, profile_count):
                 clicked = False
                 for selector in follow_button_selectors:
                     try:
-                        follow_button = WebDriverWait(driver, 5).until(
+                        follow_button = WebDriverWait(driver, 3).until(
                             EC.element_to_be_clickable((By.XPATH, selector))
                         )
                         follow_button.click()
                         clicked = True
                         print(f"Success: Profile '{profile_name}' followed @{target_username}", file=sys.stderr)
                         successful += 1
-                        time.sleep(2)
+                        # Update analytics incrementally so the UI can poll and show live updates
+                        try:
+                            analytics_file = os.path.join('data', 'analytics.json')
+                            if os.path.exists(analytics_file):
+                                with open(analytics_file, 'r') as af:
+                                    analytics = json.load(af)
+                            else:
+                                analytics = {'instagramFollows': {'totalSuccessful': 0, 'history': []}}
+
+                            if 'instagramFollows' not in analytics:
+                                analytics['instagramFollows'] = {'totalSuccessful': 0, 'history': []}
+
+                            analytics['instagramFollows']['totalSuccessful'] = analytics['instagramFollows'].get('totalSuccessful', 0) + 1
+                            analytics['instagramFollows']['history'].append({
+                                'target': target_username,
+                                'attempted': 1,
+                                'successful': 1,
+                                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+                            })
+                            # Keep only last 50 entries
+                            analytics['instagramFollows']['history'] = analytics['instagramFollows']['history'][-50:]
+                            os.makedirs('data', exist_ok=True)
+                            with open(analytics_file, 'w') as af:
+                                json.dump(analytics, af, indent=2)
+                        except Exception:
+                            pass
                         break
                     except:
                         continue
@@ -431,7 +588,6 @@ def instagram_follow(target_username, profile_count):
             
             # Close browser
             driver.quit()
-            time.sleep(2)  # Brief pause between profiles
             
         except Exception as e:
             print(f"Error: Failed to process profile '{profile_name}': {e}", file=sys.stderr)

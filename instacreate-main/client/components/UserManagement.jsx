@@ -157,14 +157,14 @@ const UserManagement = () => {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-gray-900">
             User Management
           </h1>
-          <p className="text-gray-400 mt-1">Manage staff accounts and permissions</p>
+          <p className="text-gray-600 mt-1">Manage staff accounts and permissions</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Plus size={20} />
           <span>Add User</span>
@@ -172,101 +172,101 @@ const UserManagement = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-2xl border border-slate-600/50 shadow-xl">
+        <div className="bg-white border border-gray-300 p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm font-medium">Total Users</p>
-              <p className="text-2xl font-bold text-white">{users.length}</p>
+              <p className="text-gray-600 text-sm font-medium">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">{users.length}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <Users className="text-blue-400" size={24} />
+            <div className="w-12 h-12 bg-blue-500/20 flex items-center justify-center">
+              <Users className="text-blue-600" size={24} />
             </div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-2xl border border-slate-600/50 shadow-xl">
+        <div className="bg-white border border-gray-300 p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm font-medium">Administrators</p>
-              <p className="text-2xl font-bold text-purple-400">{users.filter(u => u.role === 'admin').length}</p>
+              <p className="text-gray-600 text-sm font-medium">Administrators</p>
+              <p className="text-2xl font-bold text-gray-900">{users.filter(u => u.role === 'admin').length}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-              <Shield className="text-purple-400" size={24} />
+            <div className="w-12 h-12 bg-gray-500/20 flex items-center justify-center">
+              <Shield className="text-gray-700" size={24} />
             </div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-slate-800 to-slate-700 p-6 rounded-2xl border border-slate-600/50 shadow-xl">
+        <div className="bg-white border border-gray-300 p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm font-medium">Staff Members</p>
-              <p className="text-2xl font-bold text-green-400">{users.filter(u => u.role !== 'admin').length}</p>
+              <p className="text-gray-600 text-sm font-medium">Staff Members</p>
+              <p className="text-2xl font-bold text-gray-900">{users.filter(u => u.role !== 'admin').length}</p>
             </div>
-            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-              <Users className="text-green-400" size={24} />
+            <div className="w-12 h-12 bg-gray-500/20 flex items-center justify-center">
+              <Users className="text-gray-700" size={24} />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50">
-        <div className="p-6 border-b border-slate-600/50">
-          <h2 className="text-xl font-semibold text-white">Users</h2>
+      <div className="bg-white border border-gray-300 shadow-lg">
+        <div className="p-6 border-b border-gray-300">
+          <h2 className="text-xl font-semibold text-gray-900">Users</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-700/50">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Permissions</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Created</th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Permissions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created</th>
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-600/50">
+            <tbody className="divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-700/30 transition-all duration-200">
+                <tr key={user.id} className="hover:bg-gray-50 transition-all duration-200">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm mr-3">
+                      <div className="w-10 h-10 bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-sm mr-3">
                         {user.username.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-white">{user.username}</div>
-                        <div className="text-xs text-gray-400">ID: {user.id.slice(-6)}</div>
+                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                        <div className="text-xs text-gray-600">ID: {user.id.slice(-6)}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${
                       user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                     }`}>
                       {getRoleDisplay(user.role)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-300">
+                  <td className="px-6 py-4 text-sm text-gray-700">
                     {Array.isArray(user.permissions) && user.permissions.includes('all') ? (
-                      <span className="text-purple-400">All Permissions</span>
+                      <span className="text-purple-600">All Permissions</span>
                     ) : (
                       <span>{Array.isArray(user.permissions) ? user.permissions.length : 0} permissions</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
+                  <td className="px-6 py-4 text-sm text-gray-600">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors"
+                        className="p-2 hover:bg-gray-100 transition-colors"
                       >
-                        <Edit size={16} className="text-gray-400" />
+                        <Edit size={16} className="text-gray-600" />
                       </button>
                       {user.role !== 'admin' && (
                         <button
                           onClick={() => handleDelete(user.id)}
-                          className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors"
+                          className="p-2 hover:bg-gray-100 transition-colors"
                         >
-                          <Trash2 size={16} className="text-red-400" />
+                          <Trash2 size={16} className="text-red-600" />
                         </button>
                       )}
                     </div>
@@ -281,9 +281,9 @@ const UserManagement = () => {
       {/* User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-2xl shadow-2xl border border-slate-600/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-600/50">
-              <h2 className="text-xl font-semibold text-white">
+          <div className="bg-white border border-gray-300 shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-300">
+              <h2 className="text-xl font-semibold text-gray-900">
                 {editingUser ? 'Edit User' : 'Create New User'}
               </h2>
             </div>
@@ -291,18 +291,18 @@ const UserManagement = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                   <input
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Password {editingUser && '(leave blank to keep current)'}
                   </label>
                   <div className="relative">
@@ -310,13 +310,13 @@ const UserManagement = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-4 py-3 pr-12 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 pr-12 bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required={!editingUser}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -325,11 +325,11 @@ const UserManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <select
                   value={formData.role}
                   onChange={(e) => handleRoleChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="admin">Administrator (All Permissions)</option>
                   <option value="staff_create_only">Staff - Create Profiles Only</option>
@@ -340,11 +340,11 @@ const UserManagement = () => {
 
               {formData.role === 'custom' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-4">Permissions</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-4">Permissions</label>
                   <div className="space-y-6">
                     {Object.entries(permissionCategories).map(([category, permissions]) => (
                       <div key={category}>
-                        <h4 className="text-sm font-medium text-blue-400 mb-3">{category}</h4>
+                        <h4 className="text-sm font-medium text-blue-600 mb-3">{category}</h4>
                         <div className="grid grid-cols-1 gap-3">
                           {permissions.map((permission) => (
                             <label key={permission.key} className="flex items-start space-x-3 cursor-pointer">
@@ -352,11 +352,11 @@ const UserManagement = () => {
                                 type="checkbox"
                                 checked={formData.permissions.includes(permission.key)}
                                 onChange={() => handlePermissionToggle(permission.key)}
-                                className="mt-1 w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
+                                className="mt-1 w-4 h-4 text-blue-600 bg-white border-gray-300 focus:ring-blue-500"
                               />
                               <div>
-                                <div className="text-sm font-medium text-white">{permission.label}</div>
-                                <div className="text-xs text-gray-400">{permission.description}</div>
+                                <div className="text-sm font-medium text-gray-900">{permission.label}</div>
+                                <div className="text-xs text-gray-600">{permission.description}</div>
                               </div>
                             </label>
                           ))}
@@ -367,21 +367,21 @@ const UserManagement = () => {
                 </div>
               )}
 
-              <div className="flex justify-end space-x-3 pt-6 border-t border-slate-600/50">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-300">
                 <button
                   type="button"
                   onClick={() => {
                     setIsModalOpen(false);
                     resetForm();
                   }}
-                  className="px-6 py-3 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors"
+                  className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white transition-all duration-200 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Saving...' : (editingUser ? 'Update User' : 'Create User')}
                 </button>

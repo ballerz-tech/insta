@@ -111,18 +111,47 @@ const Groups = () => {
   };
 
   const handleAssignProfiles = async () => {
+    console.log('Assigning profiles:', selectedProfiles, 'to group:', selectedGroupId);
     try {
       const response = await fetch(`${API_URL}/groups/${selectedGroupId}/assign`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ profiles: selectedProfiles })
       });
+      console.log('Assign response status:', response.status);
+      const data = await response.json();
+      console.log('Assign response data:', data);
+      
       if (response.ok) {
         setIsAddProfileModalOpen(false);
-        fetchGroups();
+        await fetchGroups();
+        // Automatically open the view profiles modal to show the updated list
+        setTimeout(() => {
+          handleViewProfiles(selectedGroupId);
+        }, 100);
+      } else {
+        alert(`Failed to assign profiles: ${data.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to assign profiles:', error);
+      alert('Failed to assign profiles. Check console for details.');
+    }
+  };
+
+  const handleRemoveProfile = async (groupId, profileName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/groups/${groupId}/remove`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ profile: profileName })
+      });
+      if (response.ok) {
+        handleViewProfiles(groupId); // Refresh the list
+        fetchGroups(); // Refresh group counts
+      }
+    } catch (error) {
+      console.error('Failed to remove profile:', error);
     }
   };
 
@@ -138,12 +167,12 @@ const Groups = () => {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Profile Groups</h1>
-          <p className="text-gray-400 mt-1">Organize your profiles into groups</p>
+          <h1 className="text-3xl font-bold text-gray-900">Profile Groups</h1>
+          <p className="text-gray-600 mt-1">Organize your profiles into groups</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <Plus size={20} />
           <span>Create Group</span>
@@ -152,37 +181,37 @@ const Groups = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {groups.map((group) => (
-          <div key={group.id} className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-600/50 p-6">
+          <div key={group.id} className="bg-white border border-gray-300 shadow-lg p-6">
             <div className="flex justify-between items-start mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <Users className="text-white" size={24} />
+              <div className="w-12 h-12 bg-gray-200 flex items-center justify-center">
+                <Users className="text-gray-700" size={24} />
               </div>
-              <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors">
-                <MoreVertical size={18} className="text-gray-400" />
+              <button className="p-2 hover:bg-gray-100 transition-colors">
+                <MoreVertical size={18} className="text-gray-600" />
               </button>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">{group.name}</h3>
-            <p className="text-gray-400 text-sm mb-4">{group.description}</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">{group.name}</h3>
+            <p className="text-gray-600 text-sm mb-4">{group.description}</p>
             <div className="flex justify-between items-center">
-              <span className="text-2xl font-bold text-blue-400">{group.profiles}</span>
-              <span className="text-gray-400 text-sm">profiles</span>
+              <span className="text-2xl font-bold text-gray-900">{Array.isArray(group.profiles) ? group.profiles.length : 0}</span>
+              <span className="text-gray-600 text-sm">profiles</span>
             </div>
             <div className="flex space-x-2 mt-4">
               <button 
                 onClick={() => handleViewProfiles(group.id)}
-                className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-300 rounded-lg hover:bg-blue-600/30 transition-colors text-sm"
+                className="flex-1 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
               >
                 View Profiles
               </button>
               <button 
                 onClick={() => handleAddProfile(group.id)}
-                className="px-3 py-2 bg-green-600/20 text-green-300 rounded-lg hover:bg-green-600/30 transition-colors"
+                className="px-3 py-2 bg-gray-600 text-white hover:bg-gray-700 transition-colors"
               >
                 <Plus size={16} />
               </button>
               <button 
                 onClick={() => handleDelete(group.id)}
-                className="px-3 py-2 bg-red-600/20 text-red-300 rounded-lg hover:bg-red-600/30 transition-colors"
+                className="px-3 py-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 <Trash2 size={16} />
               </button>
@@ -193,25 +222,25 @@ const Groups = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-slate-800 p-6 rounded-2xl shadow-xl w-full max-w-md border border-slate-600">
-            <h2 className="text-xl font-bold text-white mb-4">Create New Group</h2>
+          <div className="bg-white p-6 shadow-xl w-full max-w-md border border-gray-300">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Group</h2>
             <form onSubmit={handleCreate}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Group Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
                 <input
                   type="text"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows="3"
                 />
               </div>
@@ -219,13 +248,13 @@ const Groups = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition"
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white transition"
                 >
                   Create
                 </button>
@@ -237,12 +266,12 @@ const Groups = () => {
 
       {isProfileModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-slate-800 p-6 rounded-2xl shadow-xl w-full max-w-2xl border border-slate-600">
+          <div className="bg-white p-6 shadow-xl w-full max-w-2xl border border-gray-300">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-white">Group Profiles</h2>
+              <h2 className="text-xl font-bold text-gray-900">Group Profiles</h2>
               <button
                 onClick={() => setIsProfileModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-600 hover:text-gray-900"
               >
                 ×
               </button>
@@ -251,22 +280,34 @@ const Groups = () => {
               {groupProfiles.length > 0 ? (
                 <div className="space-y-2">
                   {groupProfiles.map((profile, index) => (
-                    <div key={index} className="flex items-center p-3 bg-slate-700 rounded-lg">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-3">
-                        {profile.charAt(0).toUpperCase()}
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-100 border border-gray-200">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-sm mr-3">
+                          {profile.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-gray-900">{profile}</span>
                       </div>
-                      <span className="text-white">{profile}</span>
+                      <button
+                        onClick={() => handleRemoveProfile(selectedGroupId, profile)}
+                        className="p-1 hover:bg-red-100 text-red-600 transition-colors"
+                        title="Remove from group"
+                      >
+                        <X size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 text-center py-8">No profiles assigned to this group</p>
+                <p className="text-gray-600 text-center py-8">No profiles assigned to this group</p>
               )}
             </div>
             <div className="flex justify-end mt-4">
               <button
-                onClick={() => handleAddProfile(selectedGroupId)}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
+                onClick={() => {
+                  setIsProfileModalOpen(false);
+                  handleAddProfile(selectedGroupId);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white transition"
               >
                 Add Profiles
               </button>
@@ -277,12 +318,12 @@ const Groups = () => {
 
       {isAddProfileModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-slate-800 p-6 rounded-2xl shadow-xl w-full max-w-2xl border border-slate-600">
+          <div className="bg-white p-6 shadow-xl w-full max-w-2xl border border-gray-300">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-white">Add Profiles to Group</h2>
+              <h2 className="text-xl font-bold text-gray-900">Add Profiles to Group</h2>
               <button
                 onClick={() => setIsAddProfileModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-600 hover:text-gray-900"
               >
                 ×
               </button>
@@ -291,35 +332,35 @@ const Groups = () => {
               {allProfiles.length > 0 ? (
                 <div className="space-y-2">
                   {allProfiles.map((profileName) => (
-                    <div key={profileName} className="flex items-center p-3 bg-slate-700 rounded-lg hover:bg-slate-600 cursor-pointer" onClick={() => toggleProfileSelection(profileName)}>
+                    <div key={profileName} className="flex items-center p-3 bg-gray-100 border border-gray-200 hover:bg-gray-200 cursor-pointer" onClick={() => toggleProfileSelection(profileName)}>
                       <input
                         type="checkbox"
                         checked={selectedProfiles.includes(profileName)}
-                        onChange={() => toggleProfileSelection(profileName)}
-                        className="mr-3"
+                        readOnly
+                        className="mr-3 pointer-events-none"
                       />
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-3">
+                      <div className="w-8 h-8 bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-sm mr-3">
                         {profileName.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-white">{profileName}</span>
+                      <span className="text-gray-900">{profileName}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 text-center py-8">No profiles available</p>
+                <p className="text-gray-600 text-center py-8">No profiles available</p>
               )}
             </div>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setIsAddProfileModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition"
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAssignProfiles}
                 disabled={selectedProfiles.length === 0}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Assign {selectedProfiles.length} Profile(s)
               </button>
