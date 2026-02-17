@@ -106,41 +106,41 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-md text-gray-200 max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-6 border-b border-gray-700 flex-shrink-0">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-0">
+      <div className="bg-white rounded-none shadow-none w-full max-w-md text-gray-900 max-h-full flex flex-col h-full">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center space-x-2">
             <Instagram className="text-pink-500" size={24} />
             <h2 className="text-xl font-bold">Instagram Follow Automation</h2>
           </div>
-          <button onClick={handleClose} className="p-2 hover:bg-gray-700 rounded-lg">
-            <X size={20} />
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-none">
+            <X size={20} className="text-gray-700" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-100 border border-gray-200 rounded-none p-4">
               <div className="flex items-center space-x-2 mb-2">
-                <Users className="text-blue-400" size={16} />
-                <span className="text-sm font-medium text-blue-400">Available Profiles</span>
+                <Users className="text-gray-700" size={16} />
+                <span className="text-sm font-medium text-gray-700">Available Profiles</span>
               </div>
-              <p className="text-2xl font-bold text-white">{totalProfiles}</p>
-              <p className="text-xs text-gray-400">Ready for automation</p>
+              <p className="text-2xl font-bold text-gray-900">{totalProfiles}</p>
+              <p className="text-xs text-gray-600">Ready for automation</p>
             </div>
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+            <div className="bg-gray-100 border border-gray-200 rounded-none p-4">
               <div className="flex items-center space-x-2 mb-2">
-                <TrendingUp className="text-green-400" size={16} />
-                <span className="text-sm font-medium text-green-400">Total Successful Follows</span>
+                <TrendingUp className="text-gray-700" size={16} />
+                <span className="text-sm font-medium text-gray-700">Total Successful Follows</span>
               </div>
-              <p className="text-2xl font-bold text-white">{followStats.totalSuccessful}</p>
-              <p className="text-xs text-gray-400">All-time successful follows</p>
+              <p className="text-2xl font-bold text-gray-900">{followStats.totalSuccessful}</p>
+              <p className="text-xs text-gray-600">All-time successful follows</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
               Target Instagram Username
             </label>
             <input
@@ -148,7 +148,7 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
               value={targetUsername}
               onChange={(e) => setTargetUsername(e.target.value)}
               placeholder="@username or username"
-              className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -157,7 +157,7 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
               Number of Profiles to Use
             </label>
             <input
@@ -166,7 +166,7 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
               max={totalProfiles}
               value={profileCount}
               onChange={(e) => setProfileCount(parseInt(e.target.value) || 1)}
-              className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -175,11 +175,11 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
           </div>
 
           {followStats.history.length > 0 && (
-            <div className="bg-gray-500/10 border border-gray-500/20 rounded-lg p-4 max-h-32 overflow-y-auto">
-              <h4 className="text-sm font-medium text-gray-400 mb-2">Recent Follow History:</h4>
+            <div className="bg-gray-100 border border-gray-200 rounded-none p-4 max-h-32 overflow-y-auto">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Follow History:</h4>
               <div className="space-y-1">
                 {followStats.history.slice(-3).reverse().map((entry, index) => (
-                  <div key={index} className="text-xs text-gray-400 flex justify-between">
+                  <div key={index} className="text-xs text-gray-600 flex justify-between">
                     <span>@{entry.target}</span>
                     <span className="text-green-400">{entry.successful}/{entry.attempted}</span>
                   </div>
@@ -188,9 +188,9 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
             </div>
           )}
 
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-yellow-400 mb-2">Automation Features:</h4>
-            <ul className="text-xs text-gray-400 space-y-1">
+          <div className="bg-gray-100 border border-gray-200 rounded-none p-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Automation Features:</h4>
+            <ul className="text-xs text-gray-600 space-y-1">
               <li>• Random profile selection for natural behavior</li>
               <li>• Warm-up actions before following (anti-detection)</li>
               <li>• Human-like delays between actions</li>
@@ -200,19 +200,19 @@ const InstagramAutomationModal = ({ isOpen, onClose, onSubmit, totalProfiles }) 
 
           </div>
 
-          <div className="flex justify-end space-x-3 p-6 pt-4 border-t border-gray-700 flex-shrink-0 bg-[#1e2024]">
+          <div className="flex justify-end space-x-3 p-6 pt-4 border-t border-gray-200 flex-shrink-0 bg-white">
             <button
               type="button"
               onClick={handleClose}
               disabled={isRunning}
-              className="px-6 py-2 rounded-md bg-gray-600 hover:bg-gray-700 disabled:opacity-50 transition"
+              className="px-6 py-2 rounded-none bg-gray-200 hover:bg-gray-300 disabled:opacity-50 transition text-gray-900"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isRunning || totalProfiles === 0}
-              className="flex items-center space-x-2 px-6 py-2 rounded-md bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="flex items-center space-x-2 px-6 py-2 rounded-none bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition text-gray-900"
             >
               <Play size={16} />
               <span>{isRunning ? 'Starting...' : 'Start Automation'}</span>

@@ -54,12 +54,12 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto text-gray-200">
-        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-0">
+      <div className="bg-white rounded-none shadow-none w-full max-w-2xl max-h-full overflow-y-auto text-gray-900 h-full">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold">Bulk Operations</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-700 rounded-lg">
-            <X size={20} />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-none">
+            <X size={20} className="text-gray-700" />
           </button>
         </div>
 
@@ -67,14 +67,14 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
           <div className="flex space-x-4 mb-6">
             <button
               onClick={() => setActiveTab('create')}
-              className={`px-4 py-2 rounded-lg ${activeTab === 'create' ? 'bg-blue-600' : 'bg-gray-600'}`}
+              className={`px-4 py-2 rounded-none ${activeTab === 'create' ? 'bg-gray-300 text-gray-900' : 'bg-gray-200 text-gray-900'}`}
             >
               <Plus size={16} className="inline mr-2" />
               Bulk Create
             </button>
             <button
               onClick={() => setActiveTab('delete')}
-              className={`px-4 py-2 rounded-lg ${activeTab === 'delete' ? 'bg-red-600' : 'bg-gray-600'}`}
+              className={`px-4 py-2 rounded-none ${activeTab === 'delete' ? 'bg-gray-300 text-gray-900' : 'bg-gray-200 text-gray-900'}`}
             >
               <Trash2 size={16} className="inline mr-2" />
               Bulk Delete
@@ -84,7 +84,7 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
           {activeTab === 'create' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Number of Profiles
                 </label>
                 <input
@@ -93,18 +93,18 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
                   max="50"
                   value={createData.count}
                   onChange={(e) => setCreateData(prev => ({ ...prev, count: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Device Type
                 </label>
                 <select
                   value={createData.deviceType}
                   onChange={(e) => setCreateData(prev => ({ ...prev, deviceType: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   {deviceTypes.map(type => (
                     <option key={type.value} value={type.value}>
@@ -115,23 +115,23 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Name Prefix
                 </label>
                 <input
                   type="text"
                   value={createData.prefix}
                   onChange={(e) => setCreateData(prev => ({ ...prev, prefix: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   Profiles will be named: {createData.prefix}_1, {createData.prefix}_2, etc.
                 </p>
               </div>
               
               <button
                 onClick={handleBulkCreate}
-                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+                className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-none transition text-gray-900"
               >
                 Create {createData.count} Profiles
               </button>
@@ -141,36 +141,36 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
           {activeTab === 'delete' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-gray-700">
                   Selected: {selectedProfiles.length} / {Object.keys(profiles).length}
                 </span>
                 <div className="space-x-2">
                   <button
                     onClick={selectAll}
-                    className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm"
+                    className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-none text-sm text-gray-900"
                   >
                     Select All
                   </button>
                   <button
                     onClick={clearSelection}
-                    className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm"
+                    className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-none text-sm text-gray-900"
                   >
                     Clear
                   </button>
                 </div>
               </div>
               
-              <div className="max-h-60 overflow-y-auto border border-gray-600 rounded-lg">
+                <div className="max-h-60 overflow-y-auto border border-gray-600 rounded-none">
                 {Object.keys(profiles).map(profileName => (
-                  <label key={profileName} className="flex items-center p-3 hover:bg-gray-700 cursor-pointer">
+                  <label key={profileName} className="flex items-center p-3 hover:bg-gray-100 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedProfiles.includes(profileName)}
                       onChange={() => toggleProfile(profileName)}
                       className="mr-3"
                     />
-                    <span className="flex-1">{profileName}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="flex-1 text-gray-900">{profileName}</span>
+                    <span className="text-xs text-gray-600">
                       {profiles[profileName].proxy ? 'With Proxy' : 'No Proxy'}
                     </span>
                   </label>
@@ -180,7 +180,7 @@ const BulkOperationsModal = ({ isOpen, onClose, onBulkCreate, onBulkDelete, prof
               <button
                 onClick={handleBulkDelete}
                 disabled={selectedProfiles.length === 0}
-                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition"
+                className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-none transition text-gray-900"
               >
                 Delete {selectedProfiles.length} Profiles
               </button>

@@ -201,12 +201,12 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto text-gray-200">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-0">
+      <div className="bg-white rounded-none shadow-none w-full max-w-2xl max-h-full overflow-y-auto text-gray-900 h-full">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold">Create New Profile</h2>
-          <button onClick={handleClose} className="p-2 hover:bg-gray-700 rounded-lg">
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-none">
             <X size={20} />
           </button>
         </div>
@@ -215,25 +215,25 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Profile Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Group
               </label>
               <select
                 value={formData.groupId}
                 onChange={(e) => handleInputChange('groupId', e.target.value)}
-                className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 <option value="">No Group</option>
                 {groups.map((group) => (
@@ -244,7 +244,7 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Remark
               </label>
               <input
@@ -252,14 +252,14 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
                 value={formData.remark}
                 onChange={(e) => handleInputChange('remark', e.target.value)}
                 placeholder="Optional description"
-                className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
             </div>
           </div>
 
           {/* Proxy Settings */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-300">Proxy Settings</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Proxy Settings</h3>
             
             <div className="flex items-center space-x-4">
               <label className="flex items-center space-x-2">
@@ -271,9 +271,9 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
                     setUseCustomProxy(false);
                     handleInputChange('proxy', '');
                   }}
-                  className="text-blue-600"
+                  className="text-gray-800"
                 />
-                <span className="text-gray-300">Select from saved proxies</span>
+                <span className="text-gray-700">Select from saved proxies</span>
               </label>
               <label className="flex items-center space-x-2">
                 <input
@@ -281,21 +281,21 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
                   name="proxyType"
                   checked={useCustomProxy}
                   onChange={() => setUseCustomProxy(true)}
-                  className="text-blue-600"
+                  className="text-gray-800"
                 />
-                <span className="text-gray-300">Custom proxy</span>
+                <span className="text-gray-700">Custom proxy</span>
               </label>
             </div>
 
             {!useCustomProxy ? (
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Select Proxy
                 </label>
                 <select
                   value={formData.proxy}
                   onChange={(e) => handleInputChange('proxy', e.target.value)}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   <option value="">No Proxy</option>
                   {proxies.map((proxy) => (
@@ -307,7 +307,7 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Custom Proxy URL
                 </label>
                 <input
@@ -315,7 +315,7 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
                   value={formData.proxy}
                   onChange={(e) => handleInputChange('proxy', e.target.value)}
                   placeholder="http://user:pass@host:port or socks5://user:pass@host:port"
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Supports: HTTP, HTTPS, SOCKS5 with username:password authentication
@@ -326,16 +326,16 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
 
           {/* Browser Settings */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-300">Browser Settings</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Browser Settings</h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 User Agent
               </label>
               <select
                 value={formData.user_agent}
                 onChange={(e) => handleInputChange('user_agent', e.target.value)}
-                className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 <option value="">Random (Recommended)</option>
                 {userAgents.map((ua, index) => {
@@ -367,13 +367,13 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Language
                 </label>
                 <select
                   value={formData.language}
                   onChange={(e) => handleInputChange('language', e.target.value)}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   {languages.map((lang) => (
                     <option key={lang.value} value={lang.value}>
@@ -384,13 +384,13 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Timezone
                 </label>
                 <select
                   value={formData.timezone}
                   onChange={(e) => handleInputChange('timezone', e.target.value)}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   {timezones.map((tz) => (
                     <option key={tz.value} value={tz.value}>
@@ -404,17 +404,17 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
 
           {/* Fingerprint Settings */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-300">Fingerprint Settings</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Fingerprint Settings</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Screen Resolution
                 </label>
                 <select
                   value={JSON.stringify(formData.window_size)}
                   onChange={(e) => handleInputChange('window_size', JSON.parse(e.target.value))}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   {screenResolutions.map((res) => (
                     <option key={`${res[0]}x${res[1]}`} value={JSON.stringify(res)}>
@@ -425,13 +425,13 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   WebRTC
                 </label>
                 <select
                   value={formData.webrtc}
                   onChange={(e) => handleInputChange('webrtc', e.target.value)}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   <option value="disabled">Disabled</option>
                   <option value="replace">Replace</option>
@@ -442,13 +442,13 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
 
           {/* Startup URLs */}
-          <div className="space-y-4">
+            <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-300">Startup URLs</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Startup URLs</h3>
               <button
                 type="button"
                 onClick={addUrl}
-                className="flex items-center space-x-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm"
+                className="flex items-center space-x-1 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-none text-sm text-gray-900"
               >
                 <Plus size={16} />
                 <span>Add URL</span>
@@ -458,18 +458,18 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
             <div className="space-y-2">
               {formData.startup_urls.map((url, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <input
+                    <input
                     type="url"
                     value={url}
                     onChange={(e) => handleUrlChange(index, e.target.value)}
                     placeholder="https://example.com"
-                    className="flex-1 px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
                   {formData.startup_urls.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeUrl(index)}
-                      className="p-2 text-red-400 hover:bg-red-500 hover:text-white rounded-md"
+                      className="p-2 text-gray-900 hover:bg-gray-300 hover:text-gray-900 rounded-none"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -480,21 +480,23 @@ const CreateProfileModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-6 py-2 rounded-md bg-gray-600 hover:bg-gray-700 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 transition"
-            >
-              Create Profile
-            </button>
-          </div>
+            <div className="pt-4 border-t border-gray-200">
+              <button
+                type="submit"
+                className="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-none text-gray-900 transition"
+              >
+                Create Profile
+              </button>
+              <div className="flex justify-end mt-3">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-6 py-2 rounded-none bg-gray-200 hover:bg-gray-300 text-gray-900 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
         </form>
       </div>
     </div>

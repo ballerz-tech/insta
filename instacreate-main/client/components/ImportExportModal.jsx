@@ -76,12 +76,12 @@ const ImportExportModal = ({ isOpen, onClose, onImport }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-md text-gray-200">
-        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-0">
+      <div className="bg-white rounded-none shadow-none w-full max-w-md text-gray-900 h-full max-h-full overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold">Import / Export Profiles</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-700 rounded-lg">
-            <X size={20} />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-none">
+            <X size={20} className="text-gray-700" />
           </button>
         </div>
 
@@ -89,14 +89,14 @@ const ImportExportModal = ({ isOpen, onClose, onImport }) => {
           <div className="flex space-x-4 mb-6">
             <button
               onClick={() => setActiveTab('export')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${activeTab === 'export' ? 'bg-green-600' : 'bg-gray-600'}`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-none ${activeTab === 'export' ? 'bg-gray-300 text-gray-900' : 'bg-gray-200 text-gray-900'}`}
             >
               <Download size={16} />
               <span>Export</span>
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${activeTab === 'import' ? 'bg-blue-600' : 'bg-gray-600'}`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-none ${activeTab === 'import' ? 'bg-gray-300 text-gray-900' : 'bg-gray-200 text-gray-900'}`}
             >
               <Upload size={16} />
               <span>Import</span>
@@ -105,13 +105,13 @@ const ImportExportModal = ({ isOpen, onClose, onImport }) => {
 
           {activeTab === 'export' && (
             <div className="space-y-4">
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-600 text-sm">
                 Export all your profiles with browser data (cookies, history, passwords) to a ZIP file.
               </p>
               <button
                 onClick={handleExport}
                 disabled={isProcessing}
-                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition flex items-center justify-center space-x-2"
+                className="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-none transition flex items-center justify-center space-x-2 text-gray-900"
               >
                 <Download size={16} />
                 <span>{isProcessing ? 'Exporting...' : 'Export Profiles + Data'}</span>
@@ -121,19 +121,19 @@ const ImportExportModal = ({ isOpen, onClose, onImport }) => {
 
           {activeTab === 'import' && (
             <div className="space-y-4">
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-600 text-sm">
                 Import profiles with all browser data from a previously exported ZIP file.
               </p>
               
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Select ZIP File
                 </label>
                 <input
                   type="file"
                   accept=".zip"
                   onChange={handleFileChange}
-                  className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-sm file:bg-gray-200 file:text-gray-900 hover:file:bg-gray-300"
                 />
               </div>
 
@@ -143,9 +143,9 @@ const ImportExportModal = ({ isOpen, onClose, onImport }) => {
                   id="overwrite"
                   checked={overwrite}
                   onChange={(e) => setOverwrite(e.target.checked)}
-                  className="rounded"
+                  className="rounded-none"
                 />
-                <label htmlFor="overwrite" className="text-sm text-gray-400">
+                <label htmlFor="overwrite" className="text-sm text-gray-600">
                   Overwrite existing profiles with same names
                 </label>
               </div>
@@ -153,7 +153,7 @@ const ImportExportModal = ({ isOpen, onClose, onImport }) => {
               <button
                 onClick={handleImport}
                 disabled={isProcessing || !importFile}
-                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition flex items-center justify-center space-x-2"
+                className="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-none transition flex items-center justify-center space-x-2 text-gray-900"
               >
                 <Upload size={16} />
                 <span>{isProcessing ? 'Importing...' : 'Import Profiles + Data'}</span>

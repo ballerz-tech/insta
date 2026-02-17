@@ -39,19 +39,19 @@ const ChangeProxyModal = ({ isOpen, onClose, onSubmit, profileName, currentProxy
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-[#1e2024] rounded-lg shadow-xl w-full max-w-md text-gray-200">
-        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-0">
+      <div className="bg-white rounded-none shadow-none w-full max-w-md text-gray-900 h-full max-h-full overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold">Change Proxy</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-700 rounded-lg">
-            <X size={20} />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-none">
+            <X size={20} className="text-gray-700" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <p className="text-sm text-gray-400 mb-4">
-              Profile: <span className="text-white font-medium">{profileName}</span>
+            <p className="text-sm text-gray-600 mb-4">
+              Profile: <span className="text-gray-900 font-medium">{profileName}</span>
             </p>
           </div>
 
@@ -65,9 +65,9 @@ const ChangeProxyModal = ({ isOpen, onClose, onSubmit, profileName, currentProxy
                   setUseCustomProxy(false);
                   setProxy('');
                 }}
-                className="text-blue-600"
+                className="text-gray-800"
               />
-              <span className="text-gray-300">Select from saved proxies</span>
+              <span className="text-gray-700">Select from saved proxies</span>
             </label>
             <label className="flex items-center space-x-2">
               <input
@@ -75,21 +75,21 @@ const ChangeProxyModal = ({ isOpen, onClose, onSubmit, profileName, currentProxy
                 name="proxyType"
                 checked={useCustomProxy}
                 onChange={() => setUseCustomProxy(true)}
-                className="text-blue-600"
+                className="text-gray-800"
               />
-              <span className="text-gray-300">Custom proxy</span>
+              <span className="text-gray-700">Custom proxy</span>
             </label>
           </div>
 
           {!useCustomProxy ? (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Select Proxy
               </label>
               <select
                 value={proxy}
                 onChange={(e) => setProxy(e.target.value)}
-                className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 <option value="">No Proxy</option>
                 {proxies.map((proxyItem) => (
@@ -101,15 +101,15 @@ const ChangeProxyModal = ({ isOpen, onClose, onSubmit, profileName, currentProxy
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Custom Proxy URL
               </label>
-              <input
+                <input
                 type="text"
                 value={proxy}
                 onChange={(e) => setProxy(e.target.value)}
                 placeholder="http://user:pass@host:port or leave empty to remove proxy"
-                className="w-full px-3 py-2 bg-[#2d3035] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Leave empty to remove proxy completely
@@ -117,17 +117,17 @@ const ChangeProxyModal = ({ isOpen, onClose, onSubmit, profileName, currentProxy
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 rounded-md bg-gray-600 hover:bg-gray-700 transition"
+              className="px-6 py-2 rounded-none bg-gray-200 hover:bg-gray-300 text-gray-900 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 transition"
+              className="px-6 py-2 rounded-none bg-gray-200 hover:bg-gray-300 text-gray-900 transition"
             >
               Change Proxy
             </button>
