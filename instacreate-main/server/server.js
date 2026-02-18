@@ -22,7 +22,10 @@ const PORT = 4000;
 const runningProcesses = new Map();
 
 // Python configuration
-const PYTHON_PATH = path.resolve(__dirname, '..', '.venv', 'Scripts', 'python.exe');
+// Allow overriding via environment (useful in container). Default to Windows venv Python for dev, or /usr/bin/python in production/linux.
+const PYTHON_PATH = process.env.PYTHON_PATH || (process.platform === 'win32'
+    ? path.resolve(__dirname, '..', '.venv', 'Scripts', 'python.exe')
+    : '/usr/bin/python');
 const MANAGER_PATH = path.resolve(__dirname, '..', 'manager.py');
 
 // Data storage files
