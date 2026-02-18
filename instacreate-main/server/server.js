@@ -216,7 +216,12 @@ app.post('/api/profiles/launch', authenticateToken, checkPermission('use_profile
         return res.status(400).json({ error: `Profile '${name}' is already running.` });
     }
 
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'launch', '--name', name]);
+    const spawnEnv = { ...process.env };
+    // Ensure DISPLAY is forwarded to the Python process in Linux/Docker
+    if (process.platform !== 'win32' && !spawnEnv.DISPLAY) {
+        spawnEnv.DISPLAY = ':99';
+    }
+    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'launch', '--name', name], { env: spawnEnv });
     
     runningProcesses.set(name, pythonProcess);
     console.log(`[+] Process started for '${name}' with PID: ${pythonProcess.pid}`);

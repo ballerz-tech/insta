@@ -182,6 +182,10 @@ def launch_profile(name):
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--remote-debugging-port=9222")
+        # Ensure DISPLAY is set for Xvfb virtual display
+        display = os.environ.get('DISPLAY', ':99')
+        os.environ['DISPLAY'] = display
+        print(f"Info: Using DISPLAY={display}", file=sys.stderr)
     
     # Profile isolation and data persistence
     chrome_options.add_argument(f"--user-data-dir={profile_data_path}")
@@ -242,11 +246,24 @@ def launch_profile(name):
         print(f"Info: Using chromedriver (auto-download if needed)", file=sys.stderr)
         print(f"Info: Profile data directory: {profile_data_path}", file=sys.stderr)
         
-        # Let undetected-chromedriver auto-download the correct version
-        driver = uc.Chrome(
-            options=chrome_options,
-            use_subprocess=False
-        )
+        # In Docker/Linux, use the system Chromium binary since google-chrome is not installed
+        uc_kwargs = {
+            "options": chrome_options,
+            "use_subprocess": False,
+        }
+        if IS_DOCKER:
+            # Alpine Linux installs chromium at /usr/bin/chromium-browser
+            chromium_paths = ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome']
+            for cp in chromium_paths:
+                if os.path.exists(cp):
+                    chrome_options.binary_location = cp
+                    print(f"Info: Using Chrome binary: {cp}", file=sys.stderr)
+                    break
+            # Use the system chromedriver directly — no auto-download needed
+            uc_kwargs["driver_executable_path"] = os.environ.get('CHROMEDRIVER_PATH', '/usr/bin/chromedriver')
+
+        # Let undetected-chromedriver auto-download the correct version (non-Docker)
+        driver = uc.Chrome(**uc_kwargs)
         
         print(f"Info: Chrome driver initialized successfully", file=sys.stderr)
         

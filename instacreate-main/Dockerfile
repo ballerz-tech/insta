@@ -18,6 +18,7 @@ RUN apk add --no-cache \
     chromium-chromedriver \
     xvfb \
     x11vnc \
+    xdpyinfo \
     fluxbox \
     git \
     && ln -sf python3 /usr/bin/python
