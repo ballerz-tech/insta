@@ -9,5 +9,6 @@ services:
     environment:
       - NODE_ENV=production
       - CHROMEDRIVER_PATH=/usr/bin/chromedriver
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production-12345}
     restart: unless-stopped
     container_name: webproxy-app
