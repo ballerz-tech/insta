@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Start dbus (Chrome needs it for IPC)
+mkdir -p /var/run/dbus
+dbus-daemon --system --fork 2>/dev/null || true
+
 # Start Xvfb (virtual framebuffer)
 Xvfb :99 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset &
 XVFB_PID=$!
@@ -47,6 +51,11 @@ echo "x11vnc started"
     6080 localhost:5900 &
 sleep 1
 echo "noVNC started on port 6080"
+
+# Quick sanity check that Chromium can start
+DISPLAY=:99 timeout 5 chromium --no-sandbox --headless --dump-dom about:blank >/dev/null 2>&1 \
+    && echo "Chromium sanity check: OK" \
+    || echo "WARNING: Chromium sanity check failed"
 
 # Start the Node.js backend
 export DISPLAY=:99

@@ -1,5 +1,5 @@
 # Multi-stage build for WebProxy application
-FROM node:20-alpine AS frontend-build
+FROM node:20-slim AS frontend-build
 
 # Build frontend
 WORKDIR /app/client
@@ -8,24 +8,28 @@ RUN npm ci
 COPY client/ ./
 RUN npm run build
 
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
-# Install Python, Chrome, VNC and noVNC
-RUN apk add --no-cache \
+# Install system dependencies: Python, Chromium, VNC stack, fonts, dbus
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
-    py3-pip \
+    python3-pip \
     chromium \
-    chromium-chromedriver \
+    chromium-driver \
     xvfb \
     x11vnc \
-    xdpyinfo \
+    x11-utils \
     fluxbox \
     git \
+    procps \
+    dbus-x11 \
+    fonts-liberation \
+    fonts-noto-color-emoji \
+    fonts-freefont-ttf \
+    && rm -rf /var/lib/apt/lists/* \
     && ln -sf python3 /usr/bin/python
 
 # Install noVNC
-# NOTE: Do NOT symlink index.html -> vnc.html before overwriting index.html,
-# because writing to a symlink would destroy the real vnc.html file.
 RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC \
     && git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify
 
@@ -48,13 +52,13 @@ COPY manager.py ./
 # Copy built frontend
 COPY --from=frontend-build /app/client/dist ./client/dist
 
-# Create data directories and set permissions
-RUN mkdir -p server/data server/selenium_profiles /root/.local/share/undetected_chromedriver
-RUN chmod 755 /root/.local/share/undetected_chromedriver
+# Create data directories
+RUN mkdir -p server/data server/selenium_profiles
 
-# Create symlink for undetected_chromedriver
-RUN ln -s /usr/bin/chromedriver /root/.local/share/undetected_chromedriver/undetected_chromedriver
-RUN chmod +x /usr/bin/chromedriver
+# Setup undetected_chromedriver — COPY the binary (not symlink!) so UC can patch it
+RUN mkdir -p /root/.local/share/undetected_chromedriver \
+    && cp /usr/bin/chromedriver /root/.local/share/undetected_chromedriver/undetected_chromedriver \
+    && chmod 755 /root/.local/share/undetected_chromedriver/undetected_chromedriver
 
 # Set environment variables
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
