@@ -323,15 +323,18 @@ function App() {
       headers: getAuthHeaders(),
       body: JSON.stringify({ name }),
     });
-    // In production (Docker/VPS), show the embedded noVNC viewer
+    // In production (Docker/VPS), show the embedded noVNC viewer after a short
+    // delay so Chrome has time to start painting on the virtual display.
     if (process.env.NODE_ENV === 'production') {
-      setVncViewerProfile(name);
-      setIsVncViewerOpen(true);
+      setTimeout(() => {
+        setVncViewerProfile(name);
+        setIsVncViewerOpen(true);
+      }, 3000);
     }
-    // Check for ban detection after 3 seconds
+    // Check for ban detection after 5 seconds
     setTimeout(() => {
       fetchProfiles();
-    }, 3000);
+    }, 5000);
   };
 
   const handleClose = async (name) => {

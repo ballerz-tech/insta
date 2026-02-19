@@ -181,9 +181,7 @@ def launch_profile(name):
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--use-gl=swiftshader")
-        chrome_options.add_argument("--window-position=0,0")
-        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--remote-debugging-port=9222")
         # Ensure DISPLAY is set for Xvfb virtual display
         display = os.environ.get('DISPLAY', ':99')
         os.environ['DISPLAY'] = display

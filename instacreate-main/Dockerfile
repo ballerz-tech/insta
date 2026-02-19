@@ -24,11 +24,12 @@ RUN apk add --no-cache \
     && ln -sf python3 /usr/bin/python
 
 # Install noVNC
+# NOTE: Do NOT symlink index.html -> vnc.html before overwriting index.html,
+# because writing to a symlink would destroy the real vnc.html file.
 RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC \
-    && git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify \
-    && ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+    && git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify
 
-# Override index.html so direct visits to :6080 auto-connect without a click
+# Create a custom index.html so direct visits to :6080 auto-connect without a click
 RUN printf '<!DOCTYPE html><html><head><meta charset="utf-8"><title>VNC Viewer</title></head><body><script>var h=window.location.hostname,p=window.location.port;window.location.replace("http://"+h+":"+p+"/vnc.html?autoconnect=1&resize=scale&path=websockify");</script></body></html>' > /opt/noVNC/index.html
 
 # Setup backend

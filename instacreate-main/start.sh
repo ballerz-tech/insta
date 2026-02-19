@@ -1,26 +1,32 @@
 #!/bin/sh
 
-# Start Xvfb (virtual display)
+# Start Xvfb
 Xvfb :99 -screen 0 1920x1080x24 -ac &
-XVFB_PID=$!
-# Wait until Xvfb is ready (up to 10 seconds)
-for i in $(seq 1 10); do
-    DISPLAY=:99 xdpyinfo >/dev/null 2>&1 && break
-    sleep 1
-done
+sleep 2
 
-# Start window manager
+# Start Fluxbox
 DISPLAY=:99 fluxbox &
-sleep 1
-
-# Start VNC server
-DISPLAY=:99 x11vnc -display :99 -nopw -listen localhost -rfbport 5900 -xkb -ncache 10 -ncache_cr -forever &
 sleep 2
 
-# Start noVNC web server with correct web root
-cd /opt/noVNC && ./utils/websockify/run --web /opt/noVNC 6080 localhost:5900 &
+# Start x11vnc on explicit port
+DISPLAY=:99 x11vnc \
+    -display :99 \
+    -rfbport 5900 \
+    -forever \
+    -shared \
+    -nopw \
+    -xkb &
+
 sleep 2
 
-# Start the main application
+# Start noVNC
+/opt/noVNC/utils/websockify/run \
+    --web /opt/noVNC \
+    6080 localhost:5900 &
+
+sleep 2
+
+# Start backend
 export DISPLAY=:99
-cd /app/server && node server.js
+cd /app/server
+node server.js
