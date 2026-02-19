@@ -20,15 +20,20 @@ RUN apk add --no-cache \
     x11vnc \
     xdpyinfo \
     fluxbox \
-    git \
+    wget \
+    tar \
     && ln -sf python3 /usr/bin/python
 
-# Install noVNC
-RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC \
-    && git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify \
-    && ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+# Install noVNC (pinned release — no git clone needed)
+RUN wget -qO /tmp/novnc.tar.gz https://github.com/novnc/noVNC/archive/refs/tags/v1.4.0.tar.gz \
+    && tar -xzf /tmp/novnc.tar.gz -C /opt \
+    && mv /opt/noVNC-1.4.0 /opt/noVNC \
+    && rm /tmp/novnc.tar.gz
 
-# Override index.html so direct visits to :6080 auto-connect without a click
+# Install websockify via pip (reliable, no git clone)
+RUN pip3 install --no-cache-dir --break-system-packages websockify
+
+# Auto-connect index page so visiting :6080 directly auto-connects
 RUN printf '<!DOCTYPE html><html><head><meta charset="utf-8"><title>VNC Viewer</title></head><body><script>var h=window.location.hostname,p=window.location.port;window.location.replace("http://"+h+":"+p+"/vnc.html?autoconnect=1&resize=scale&path=websockify");</script></body></html>' > /opt/noVNC/index.html
 
 # Setup backend
