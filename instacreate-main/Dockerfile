@@ -10,8 +10,10 @@ RUN npm run build
 
 FROM node:20-slim AS production
 
-# Install system dependencies: Python, Chromium, VNC stack, fonts, dbus
+# Install system deps + noVNC in ONE layer to avoid /bin/sh breakage on Debian-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    dash \
+    bash \
     python3 \
     python3-pip \
     chromium \
@@ -27,14 +29,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-color-emoji \
     fonts-freefont-ttf \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf python3 /usr/bin/python
-
-# Install noVNC
-RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC \
-    && git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify
-
-# Create a custom index.html so direct visits to :6080 auto-connect without a click
-RUN printf '<!DOCTYPE html><html><head><meta charset="utf-8"><title>VNC Viewer</title></head><body><script>var h=window.location.hostname,p=window.location.port;window.location.replace("http://"+h+":"+p+"/vnc.html?autoconnect=1&resize=scale&path=websockify");</script></body></html>' > /opt/noVNC/index.html
+    && ln -sf python3 /usr/bin/python \
+    && git clone --depth 1 https://github.com/novnc/noVNC.git /opt/noVNC \
+    && git clone --depth 1 https://github.com/novnc/websockify /opt/noVNC/utils/websockify \
+    && printf '<!DOCTYPE html><html><head><meta charset="utf-8"><title>VNC Viewer</title></head><body><script>var h=window.location.hostname,p=window.location.port;window.location.replace("http://"+h+":"+p+"/vnc.html?autoconnect=1&resize=scale&path=websockify");</script></body></html>' > /opt/noVNC/index.html
 
 # Setup backend
 WORKDIR /app
