@@ -48,7 +48,7 @@ COPY manager.py ./
 COPY --from=frontend-build /app/client/dist ./client/dist
 
 # Create data directories and set permissions
-RUN mkdir -p server/data selenium_profiles /root/.local/share/undetected_chromedriver
+RUN mkdir -p server/data server/selenium_profiles /root/.local/share/undetected_chromedriver
 RUN chmod 755 /root/.local/share/undetected_chromedriver
 
 # Create symlink for undetected_chromedriver

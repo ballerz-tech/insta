@@ -320,71 +320,42 @@ def launch_profile(name):
 
         print("Info: Profile launched successfully", file=sys.stderr)
         
-        # Keep browser running and detect whether Instagram was visited
+        # Keep browser running until the server kills this process (via Close button)
+        # Only exit if Chrome becomes completely unresponsive for a sustained period
         instagram_seen = False
-        # If we stored a startup handle above, use it to detect manual tab close
-        try:
-            startup_handle
-        except NameError:
-            startup_handle = None
+        consecutive_errors = 0
+        MAX_ERRORS = 12  # 12 * 5s = 60s of unresponsiveness before giving up
+
         try:
             while True:
                 try:
-                    cur = ''
+                    # Just check the driver is still alive
+                    _ = driver.window_handles
+                    consecutive_errors = 0  # reset on success
+                    # Track Instagram visits for analytics only (no auto-ban)
                     try:
                         cur = driver.current_url or ''
-                    except:
-                        cur = ''
-                    # mark seen if current url is instagram
-                    if 'instagram.com' in cur.lower():
-                        instagram_seen = True
-                    # also check page source occasionally
-                    try:
-                        src = (driver.page_source or '').lower()
-                        if 'instagram.com' in src:
+                        if 'instagram.com' in cur.lower():
                             instagram_seen = True
                     except:
                         pass
-                    # detect if the startup tab/window was closed by the user
-                    try:
-                        handles = driver.window_handles
-                        if startup_handle and startup_handle not in handles:
-                            print(f"Info: Startup tab for profile '{name}' was closed by user, exiting session.", file=sys.stderr)
-                            break
-                    except Exception:
-                        pass
                     time.sleep(5)
                 except Exception:
-                    print("Info: Browser closed manually, exiting process", file=sys.stderr)
-                    break
+                    consecutive_errors += 1
+                    if consecutive_errors >= MAX_ERRORS:
+                        print(f"Info: Browser appears closed or unresponsive after {MAX_ERRORS * 5}s, exiting.", file=sys.stderr)
+                        break
+                    time.sleep(5)
         except KeyboardInterrupt:
-            try:
-                driver.quit()
-            except:
-                pass
-        
-        # Save session data
+            pass
+
+        # Clean exit — do NOT auto-ban, do NOT call driver.quit() (server kills via SIGKILL)
         try:
-            driver.execute_script("window.localStorage.setItem('profile_closed', Date.now());")
-            time.sleep(2)
+            driver.quit()
         except:
             pass
-        
-        driver.quit()
-        # Diagnostic logging and ban decision
-        try:
-            print(f"Debug: SESSION_END - instagram_seen={instagram_seen}", file=sys.stderr)
-            print(f"Debug: Using profiles file: {PROFILE_CONFIG_FILE}", file=sys.stderr)
-            print(f"Debug: Profile exists in loaded profiles: {name in profiles}", file=sys.stderr)
-            if not instagram_seen:
-                print(f"Warning: Instagram not opened during session for profile '{name}'. Marking as banned.", file=sys.stderr)
-                profiles[name]['status'] = 'banned'
-                save_profiles(profiles)
-                print(f"Debug: Profile '{name}' status set to banned and saved.", file=sys.stderr)
-        except Exception as e:
-            print(f"Debug: Error while finalizing session for '{name}': {e}", file=sys.stderr)
 
-        print(f"Success: Browser for profile '{name}' closed. Session saved.", file=sys.stderr)
+        print(f"Success: Browser session for profile '{name}' ended.", file=sys.stderr)
         
     except Exception as e:
         print(f"Error launching browser for profile '{name}': {e}", file=sys.stderr)

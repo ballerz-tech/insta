@@ -6,7 +6,7 @@ services:
       - "6080:6080"
     volumes:
       - ./data:/app/server/data
-      - ./selenium_profiles:/app/selenium_profiles
+      - ./selenium_profiles:/app/server/selenium_profiles
     environment:
       - NODE_ENV=production
       - CHROMEDRIVER_PATH=/usr/bin/chromedriver

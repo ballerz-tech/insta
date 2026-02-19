@@ -35,6 +35,33 @@ const PROXIES_FILE = path.join(DATA_DIR, 'proxies.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const ANALYTICS_FILE = path.join(DATA_DIR, 'analytics.json');
 
+// Profile storage — same path Python uses (CWD = __dirname = /app/server in Docker)
+const PROFILES_DIR = path.join(__dirname, 'selenium_profiles');
+const PROFILE_CONFIG_FILE = path.join(PROFILES_DIR, 'profiles.json');
+
+// Random profile config options (mirrors manager.py)
+const USER_AGENTS = [
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+];
+const SCREEN_RESOLUTIONS = [[1920,1080],[1366,768],[1536,864],[1440,900],[1280,720]];
+const LANGUAGES = ['en-US,en;q=0.9','en-GB,en;q=0.9','es-ES,es;q=0.9','fr-FR,fr;q=0.9','de-DE,de;q=0.9'];
+const TIMEZONES = ['Europe/Berlin','Europe/Munich','Europe/Paris','America/New_York','America/Los_Angeles'];
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+// Direct profile JSON helpers — instant, no Python spawn needed
+const readProfiles = () => {
+    if (!fs.existsSync(PROFILE_CONFIG_FILE)) return {};
+    try { return JSON.parse(fs.readFileSync(PROFILE_CONFIG_FILE, 'utf8')); } catch { return {}; }
+};
+const saveProfiles = (data) => {
+    if (!fs.existsSync(PROFILES_DIR)) fs.mkdirSync(PROFILES_DIR, { recursive: true });
+    fs.writeFileSync(PROFILE_CONFIG_FILE, JSON.stringify(data, null, 4));
+};
+
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR);
@@ -111,94 +138,55 @@ app.post('/api/auth/users', authenticateToken, checkPermission('manage_users'), 
 app.put('/api/auth/users/:id', authenticateToken, checkPermission('manage_users'), updateUser);
 app.delete('/api/auth/users/:id', authenticateToken, checkPermission('manage_users'), deleteUser);
 
-// API to get the list of profiles
+// API to get the list of profiles — reads JSON directly, no Python spawn
 app.get('/api/profiles', authenticateToken, checkPermission('view_profiles'), (req, res) => {
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'list']);
-
-    let profileData = '';
-    pythonProcess.stdout.on('data', (data) => {
-        profileData += data.toString();
-    });
-
-    pythonProcess.on('close', () => {
-         try {
-            const profiles = JSON.parse(profileData);
-            res.json(profiles);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to parse profile data." });
-        }
-    });
+    try {
+        res.json(readProfiles());
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to read profiles.' });
+    }
 });
 
-// API to create a new profile
+// API to create a new profile — writes JSON directly, no Python spawn
 app.post('/api/profiles', authenticateToken, checkPermission('create_profiles'), (req, res) => {
-    const { name, config } = req.body;
-    const args = [MANAGER_PATH, 'create', '--name', name];
-    
-    const proxy = config?.proxy || req.body.proxy;
-    if (proxy && proxy.trim()) {
-        args.push('--proxy', proxy.trim());
+    try {
+        const { name, config } = req.body;
+        if (!name) return res.status(400).json({ error: 'Profile name required' });
+        const profiles = readProfiles();
+        if (profiles[name]) return res.status(409).json({ error: `Profile '${name}' already exists.` });
+        // Create browser profile directories
+        const profileDataPath = path.join(PROFILES_DIR, name);
+        fs.mkdirSync(path.join(profileDataPath, 'Default'), { recursive: true });
+        const cfg = config || {};
+        profiles[name] = {
+            proxy: cfg.proxy || '',
+            user_agent: cfg.user_agent || pick(USER_AGENTS),
+            window_size: cfg.window_size || pick(SCREEN_RESOLUTIONS),
+            remark: cfg.remark || '',
+            language: cfg.language || pick(LANGUAGES),
+            timezone: cfg.timezone || pick(TIMEZONES),
+            webrtc: cfg.webrtc || 'disabled',
+            startup_urls: cfg.startup_urls || ['https://httpbin.org/ip'],
+            created_at: new Date().toISOString().replace('T',' ').slice(0,19),
+            status: 'active',
+        };
+        saveProfiles(profiles);
+        res.status(201).json({ message: `Profile '${name}' created.` });
+    } catch (e) {
+        console.error('Create profile error:', e);
+        res.status(500).json({ error: 'Failed to create profile', details: e.message });
     }
-    
-    if (config) {
-        args.push('--config', JSON.stringify(config));
-    }
-
-    const pythonProcess = spawn(PYTHON_PATH, args);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(201).json({ message: `Profile '${name}' created.` });
-        } else {
-            console.error('Create profile error:', errorOutput);
-            res.status(500).json({ error: 'Failed to create profile', details: errorOutput });
-        }
-    });
 });
 
 // API to update a profile's status (e.g., mark banned/active)
 app.post('/api/profiles/status', authenticateToken, checkPermission('create_profiles'), (req, res) => {
-    const { name, status } = req.body;
-    console.log('[DEBUG] /api/profiles/status called with body:', req.body);
-    // Possible locations where profiles.json may live (server cwd vs repo root)
-    const candidatePaths = [
-        path.resolve(__dirname, 'selenium_profiles', 'profiles.json'),
-        path.resolve(__dirname, '..', 'selenium_profiles', 'profiles.json')
-    ];
-
     try {
-        let updated = false;
-        for (const profilesPath of candidatePaths) {
-            console.log(`[DEBUG] checking path: ${profilesPath} exists=${fs.existsSync(profilesPath)}`);
-            if (!fs.existsSync(profilesPath)) continue;
-            let profilesRaw = fs.readFileSync(profilesPath, 'utf8');
-            let profiles = {};
-            try {
-                profiles = JSON.parse(profilesRaw || '{}');
-                console.log(`[DEBUG] parsed profiles keys at ${profilesPath}:`, Object.keys(profiles));
-            } catch (e) {
-                console.error(`Failed to parse profiles at ${profilesPath}:`, e);
-                continue;
-            }
-            if (!profiles[name]) {
-                console.log(`[DEBUG] profile '${name}' not found in ${profilesPath}`);
-                continue;
-            }
-            profiles[name].status = status;
-            fs.writeFileSync(profilesPath, JSON.stringify(profiles, null, 2));
-            console.log(`Updated profile '${name}' status to '${status}' in ${profilesPath}`);
-            res.json({ message: `Profile '${name}' status updated to '${status}'`, path: profilesPath });
-            updated = true;
-            break;
-        }
-        if (!updated) {
-            return res.status(404).json({ error: `Profile '${name}' not found` });
-        }
+        const { name, status } = req.body;
+        const profiles = readProfiles();
+        if (!profiles[name]) return res.status(404).json({ error: `Profile '${name}' not found` });
+        profiles[name].status = status;
+        saveProfiles(profiles);
+        res.json({ message: `Profile '${name}' status updated to '${status}'` });
     } catch (error) {
         console.error('Error updating profile status:', error);
         res.status(500).json({ error: 'Failed to update profile status' });
@@ -221,7 +209,9 @@ app.post('/api/profiles/launch', authenticateToken, checkPermission('use_profile
     if (process.platform !== 'win32' && !spawnEnv.DISPLAY) {
         spawnEnv.DISPLAY = ':99';
     }
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'launch', '--name', name], { env: spawnEnv });
+    // detached=true on Linux makes Python the process group leader so we can kill -pid to nuke Chrome too
+    const spawnOpts = { env: spawnEnv, detached: process.platform !== 'win32' };
+    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'launch', '--name', name], spawnOpts);
     
     runningProcesses.set(name, pythonProcess);
     console.log(`[+] Process started for '${name}' with PID: ${pythonProcess.pid}`);
@@ -250,19 +240,17 @@ app.post('/api/profiles/close', authenticateToken, checkPermission('use_profiles
         const pid = processToKill.pid;
         
         try {
-            // Kill process tree immediately
-            const killProcess = spawn('taskkill', ['/pid', pid.toString(), '/t', '/f'], { stdio: 'ignore' });
-            killProcess.on('close', () => {
-                console.log(`Process tree killed for PID: ${pid}`);
-            });
-            
-            // Also try direct kill
-            processToKill.kill('SIGTERM');
-            
-            // Remove from running processes immediately
+            if (process.platform === 'win32') {
+                // Kill full process tree on Windows
+                spawn('taskkill', ['/pid', pid.toString(), '/t', '/f'], { stdio: 'ignore' });
+            } else {
+                // On Linux/Docker: kill the entire process group
+                try { process.kill(-pid, 'SIGKILL'); } catch (_) {}
+                try { process.kill(pid, 'SIGKILL'); } catch (_) {}
+            }
+            processToKill.kill('SIGKILL');
             runningProcesses.delete(name);
-            console.log(`Removed ${name} from running processes`);
-            
+            console.log(`Killed process ${pid} for profile '${name}'`);
         } catch (error) {
             console.error('Error killing process:', error);
             runningProcesses.delete(name);
@@ -274,133 +262,118 @@ app.post('/api/profiles/close', authenticateToken, checkPermission('use_profiles
     }
 });
 
+// Delete profile — writes JSON + removes dir directly, no Python spawn
 app.post('/api/profiles/delete', authenticateToken, checkPermission('delete_profiles'), (req, res) => {
-    const { name } = req.body;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'delete', '--name', name]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `Profile '${name}' deleted.` });
-        } else {
-            console.error('Delete profile error:', errorOutput);
-            res.status(500).json({ error: 'Failed to delete profile', details: errorOutput });
+    try {
+        const { name } = req.body;
+        const profiles = readProfiles();
+        if (!profiles[name]) return res.status(404).json({ error: `Profile '${name}' not found.` });
+        delete profiles[name];
+        saveProfiles(profiles);
+        // Remove the Chrome profile directory
+        const profileDataPath = path.join(PROFILES_DIR, name);
+        if (fs.existsSync(profileDataPath)) {
+            fs.rmSync(profileDataPath, { recursive: true, force: true });
         }
-    });
+        res.json({ message: `Profile '${name}' deleted.` });
+    } catch (e) {
+        console.error('Delete profile error:', e);
+        res.status(500).json({ error: 'Failed to delete profile', details: e.message });
+    }
 });
 
 // Rename profile
 app.post('/api/profiles/rename', authenticateToken, checkPermission('create_profiles'), (req, res) => {
-    const { oldName, newName } = req.body;
-    res.status(501).json({ error: 'Rename feature not yet implemented' });
-    return;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'rename', '--old-name', oldName, '--new-name', newName]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `Profile renamed from '${oldName}' to '${newName}'.` });
-        } else {
-            console.error('Rename profile error:', errorOutput);
-            res.status(500).json({ error: 'Failed to rename profile', details: errorOutput });
-        }
-    });
+    try {
+        const { oldName, newName } = req.body;
+        if (!oldName || !newName) return res.status(400).json({ error: 'oldName and newName required' });
+        const profiles = readProfiles();
+        if (!profiles[oldName]) return res.status(404).json({ error: `Profile '${oldName}' not found.` });
+        if (profiles[newName]) return res.status(409).json({ error: `Profile '${newName}' already exists.` });
+        profiles[newName] = { ...profiles[oldName] };
+        delete profiles[oldName];
+        saveProfiles(profiles);
+        // Rename directory
+        const oldDir = path.join(PROFILES_DIR, oldName);
+        const newDir = path.join(PROFILES_DIR, newName);
+        if (fs.existsSync(oldDir)) fs.renameSync(oldDir, newDir);
+        res.json({ message: `Profile renamed from '${oldName}' to '${newName}'.` });
+    } catch (e) {
+        console.error('Rename profile error:', e);
+        res.status(500).json({ error: 'Failed to rename profile', details: e.message });
+    }
 });
 
 // Change proxy
 app.post('/api/profiles/change-proxy', authenticateToken, checkPermission('create_profiles'), (req, res) => {
-    const { name, proxy } = req.body;
-    res.status(501).json({ error: 'Change proxy feature not yet implemented' });
-    return;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'change-proxy', '--name', name, '--proxy', proxy]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `Proxy changed for profile '${name}'.` });
-        } else {
-            console.error('Change proxy error:', errorOutput);
-            res.status(500).json({ error: 'Failed to change proxy', details: errorOutput });
-        }
-    });
+    try {
+        const { name, proxy } = req.body;
+        const profiles = readProfiles();
+        if (!profiles[name]) return res.status(404).json({ error: `Profile '${name}' not found.` });
+        profiles[name].proxy = proxy || '';
+        saveProfiles(profiles);
+        res.json({ message: `Proxy updated for profile '${name}'.` });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to change proxy', details: e.message });
+    }
 });
 
 // Disable proxy
 app.post('/api/profiles/disable-proxy', authenticateToken, checkPermission('create_profiles'), (req, res) => {
-    const { name } = req.body;
-    res.status(501).json({ error: 'Disable proxy feature not yet implemented' });
-    return;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'disable-proxy', '--name', name]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `Proxy disabled for profile '${name}'.` });
-        } else {
-            console.error('Disable proxy error:', errorOutput);
-            res.status(500).json({ error: 'Failed to disable proxy', details: errorOutput });
-        }
-    });
+    try {
+        const { name } = req.body;
+        const profiles = readProfiles();
+        if (!profiles[name]) return res.status(404).json({ error: `Profile '${name}' not found.` });
+        profiles[name].proxy = '';
+        saveProfiles(profiles);
+        res.json({ message: `Proxy disabled for profile '${name}'.` });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to disable proxy', details: e.message });
+    }
 });
 
 // Bulk create profiles
 app.post('/api/profiles/bulk-create', authenticateToken, checkPermission('create_profiles'), (req, res) => {
-    const { count, deviceType, prefix } = req.body;
-    res.status(501).json({ error: 'Bulk create feature not yet implemented' });
-    return;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'bulk-create', '--count', count.toString(), '--device-type', deviceType, '--prefix', prefix]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `${count} profiles created successfully.` });
-        } else {
-            console.error('Bulk create error:', errorOutput);
-            res.status(500).json({ error: 'Failed to create profiles', details: errorOutput });
+    try {
+        const { count, prefix } = req.body;
+        if (!count || count < 1) return res.status(400).json({ error: 'count required' });
+        const profiles = readProfiles();
+        const created = [];
+        for (let i = 1; i <= count; i++) {
+            const name = `${prefix || 'profile'}-${Date.now()}-${i}`;
+            const profileDataPath = path.join(PROFILES_DIR, name);
+            fs.mkdirSync(path.join(profileDataPath, 'Default'), { recursive: true });
+            profiles[name] = {
+                proxy: '', user_agent: pick(USER_AGENTS), window_size: pick(SCREEN_RESOLUTIONS),
+                remark: '', language: pick(LANGUAGES), timezone: pick(TIMEZONES),
+                webrtc: 'disabled', startup_urls: ['https://httpbin.org/ip'],
+                created_at: new Date().toISOString().replace('T',' ').slice(0,19), status: 'active',
+            };
+            created.push(name);
         }
-    });
+        saveProfiles(profiles);
+        res.json({ message: `${created.length} profiles created.`, profiles: created });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to bulk create profiles', details: e.message });
+    }
 });
 
 // Bulk delete profiles
 app.post('/api/profiles/bulk-delete', authenticateToken, checkPermission('delete_profiles'), (req, res) => {
-    const { names } = req.body;
-    res.status(501).json({ error: 'Bulk delete feature not yet implemented' });
-    return;
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'bulk-delete', '--names', JSON.stringify(names)]);
-    
-    let errorOutput = '';
-    pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-    });
-    
-    pythonProcess.on('close', (code) => {
-        if (code === 0) {
-            res.status(200).json({ message: `${names.length} profiles deleted successfully.` });
-        } else {
-            console.error('Bulk delete error:', errorOutput);
-            res.status(500).json({ error: 'Failed to delete profiles', details: errorOutput });
+    try {
+        const { names } = req.body;
+        if (!Array.isArray(names)) return res.status(400).json({ error: 'names array required' });
+        const profiles = readProfiles();
+        for (const name of names) {
+            delete profiles[name];
+            const dir = path.join(PROFILES_DIR, name);
+            if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
         }
-    });
+        saveProfiles(profiles);
+        res.json({ message: `${names.length} profiles deleted.` });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to bulk delete profiles', details: e.message });
+    }
 });
 
 // Instagram automation
