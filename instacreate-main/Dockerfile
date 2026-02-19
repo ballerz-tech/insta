@@ -10,13 +10,26 @@ RUN npm run build
 
 FROM node:20-alpine AS production
 
-# Install Python and Chrome (headless — no VNC/Xvfb needed)
+# Install Python, Chrome, VNC and noVNC
 RUN apk add --no-cache \
     python3 \
     py3-pip \
     chromium \
     chromium-chromedriver \
+    xvfb \
+    x11vnc \
+    xdpyinfo \
+    fluxbox \
+    git \
     && ln -sf python3 /usr/bin/python
+
+# Install noVNC
+RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC \
+    && git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify \
+    && ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+
+# Override index.html so direct visits to :6080 auto-connect without a click
+RUN printf '<!DOCTYPE html><html><head><meta charset="utf-8"><title>VNC Viewer</title></head><body><script>var h=window.location.hostname,p=window.location.port;window.location.replace("http://"+h+":"+p+"/vnc.html?autoconnect=1&resize=scale&path=websockify");</script></body></html>' > /opt/noVNC/index.html
 
 # Setup backend
 WORKDIR /app
@@ -45,8 +58,13 @@ RUN chmod +x /usr/bin/chromedriver
 # Set environment variables
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 ENV NODE_ENV=production
+ENV DISPLAY=:99
 
-EXPOSE 4000
+EXPOSE 4000 6080
+
+# Start script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 WORKDIR /app/server
-CMD ["node", "server.js"]
+CMD ["/start.sh"]
