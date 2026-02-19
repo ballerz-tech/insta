@@ -3,7 +3,6 @@ services:
     build: .
     ports:
       - "4000:4000"
-      - "6080:6080"
     volumes:
       - ./data:/app/server/data
       - ./selenium_profiles:/app/server/selenium_profiles

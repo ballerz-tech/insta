@@ -4,7 +4,9 @@ const { spawn } = require('child_process');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const multer = require('multer');
+const WebSocket = require('ws');
 const authModule = require('./auth-fallback');
 
 const { 
@@ -20,6 +22,36 @@ const app = express();
 const PORT = 4000;
 
 const runningProcesses = new Map();
+// Track Chrome debugging ports per profile (name -> port number)
+const profileDebugPorts = new Map();
+let nextDebugPort = 9200;
+
+// --- CDP Helper: connect to Chrome's debugging port and run a command ---
+async function cdpCommand(port, method, params = {}) {
+    // Get the WS debugger URL from Chrome
+    const listRes = await fetch(`http://127.0.0.1:${port}/json`);
+    const pages = await listRes.json();
+    if (!pages.length) throw new Error('No pages found');
+    const wsUrl = pages[0].webSocketDebuggerUrl;
+    if (!wsUrl) throw new Error('No webSocketDebuggerUrl');
+
+    return new Promise((resolve, reject) => {
+        const ws = new WebSocket(wsUrl);
+        const id = 1;
+        const timeout = setTimeout(() => { ws.close(); reject(new Error('CDP timeout')); }, 10000);
+        ws.on('open', () => ws.send(JSON.stringify({ id, method, params })));
+        ws.on('message', (data) => {
+            const msg = JSON.parse(data.toString());
+            if (msg.id === id) {
+                clearTimeout(timeout);
+                ws.close();
+                if (msg.error) reject(new Error(msg.error.message));
+                else resolve(msg.result);
+            }
+        });
+        ws.on('error', (err) => { clearTimeout(timeout); reject(err); });
+    });
+}
 
 // Python configuration
 // Allow overriding via environment (useful in container). Default to Windows venv Python for dev, or /usr/bin/python in production/linux.
@@ -204,14 +236,15 @@ app.post('/api/profiles/launch', authenticateToken, checkPermission('use_profile
         return res.status(400).json({ error: `Profile '${name}' is already running.` });
     }
 
-    const spawnEnv = { ...process.env };
-    // Ensure DISPLAY is forwarded to the Python process in Linux/Docker
-    if (process.platform !== 'win32' && !spawnEnv.DISPLAY) {
-        spawnEnv.DISPLAY = ':99';
-    }
+    // Assign a unique Chrome debugging port for this profile
+    const debugPort = nextDebugPort++;
+    profileDebugPorts.set(name, debugPort);
+
+    const spawnEnv = { ...process.env, CHROME_DEBUG_PORT: String(debugPort) };
+    const args = [MANAGER_PATH, 'launch', '--name', name, '--debug-port', String(debugPort)];
     // detached=true on Linux makes Python the process group leader so we can kill -pid to nuke Chrome too
     const spawnOpts = { env: spawnEnv, detached: process.platform !== 'win32' };
-    const pythonProcess = spawn(PYTHON_PATH, [MANAGER_PATH, 'launch', '--name', name], spawnOpts);
+    const pythonProcess = spawn(PYTHON_PATH, args, spawnOpts);
     
     runningProcesses.set(name, pythonProcess);
     console.log(`[+] Process started for '${name}' with PID: ${pythonProcess.pid}`);
@@ -226,6 +259,7 @@ app.post('/api/profiles/launch', authenticateToken, checkPermission('use_profile
 
     pythonProcess.on('close', (code) => {
         runningProcesses.delete(name);
+        profileDebugPorts.delete(name);
         console.log(`[-] Process for '${name}' closed with code ${code}.`);
     });
 
@@ -250,15 +284,91 @@ app.post('/api/profiles/close', authenticateToken, checkPermission('use_profiles
             }
             processToKill.kill('SIGKILL');
             runningProcesses.delete(name);
+            profileDebugPorts.delete(name);
             console.log(`Killed process ${pid} for profile '${name}'`);
         } catch (error) {
             console.error('Error killing process:', error);
             runningProcesses.delete(name);
+            profileDebugPorts.delete(name);
         }
         
         res.status(200).json({ message: `Profile '${name}' closed successfully.` });
     } else {
         res.status(404).json({ error: `No running process found for profile '${name}'.` });
+    }
+});
+
+// --- CDP-based Browser Viewer API ---
+// Screenshot: returns a JPEG image of the running Chrome page
+app.get('/api/profiles/:name/screenshot', authenticateToken, async (req, res) => {
+    const { name } = req.params;
+    const port = profileDebugPorts.get(name);
+    if (!port) return res.status(404).json({ error: 'Profile not running or no debug port' });
+    try {
+        const result = await cdpCommand(port, 'Page.captureScreenshot', { format: 'jpeg', quality: 70 });
+        const imgBuf = Buffer.from(result.data, 'base64');
+        res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' });
+        res.send(imgBuf);
+    } catch (err) {
+        console.error(`Screenshot error for ${name}:`, err.message);
+        res.status(502).json({ error: 'Failed to capture screenshot', details: err.message });
+    }
+});
+
+// Mouse event (click, move, scroll)
+app.post('/api/profiles/:name/input/mouse', authenticateToken, async (req, res) => {
+    const { name } = req.params;
+    const port = profileDebugPorts.get(name);
+    if (!port) return res.status(404).json({ error: 'Profile not running' });
+    const { type, x, y, button, clickCount, deltaX, deltaY } = req.body;
+    try {
+        if (type === 'scroll') {
+            await cdpCommand(port, 'Input.dispatchMouseEvent', {
+                type: 'mouseWheel', x: x || 0, y: y || 0, deltaX: deltaX || 0, deltaY: deltaY || 0
+            });
+        } else {
+            // type = mousePressed, mouseReleased, mouseMoved
+            await cdpCommand(port, 'Input.dispatchMouseEvent', {
+                type, x, y, button: button || 'left', clickCount: clickCount || 1
+            });
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(502).json({ error: err.message });
+    }
+});
+
+// Keyboard event
+app.post('/api/profiles/:name/input/keyboard', authenticateToken, async (req, res) => {
+    const { name } = req.params;
+    const port = profileDebugPorts.get(name);
+    if (!port) return res.status(404).json({ error: 'Profile not running' });
+    const { type, text, key, code, modifiers } = req.body;
+    try {
+        if (type === 'char' && text) {
+            await cdpCommand(port, 'Input.dispatchKeyEvent', { type: 'char', text });
+        } else {
+            await cdpCommand(port, 'Input.dispatchKeyEvent', {
+                type: type || 'keyDown', key, code, windowsVirtualKeyCode: modifiers || 0, text
+            });
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(502).json({ error: err.message });
+    }
+});
+
+// Navigate to a URL
+app.post('/api/profiles/:name/navigate', authenticateToken, async (req, res) => {
+    const { name } = req.params;
+    const port = profileDebugPorts.get(name);
+    if (!port) return res.status(404).json({ error: 'Profile not running' });
+    const { url } = req.body;
+    try {
+        await cdpCommand(port, 'Page.navigate', { url });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(502).json({ error: err.message });
     }
 });
 

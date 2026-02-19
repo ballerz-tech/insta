@@ -10,31 +10,13 @@ RUN npm run build
 
 FROM node:20-alpine AS production
 
-# Install Python, Chrome, VNC and noVNC
+# Install Python and Chrome (headless — no VNC/Xvfb needed)
 RUN apk add --no-cache \
     python3 \
     py3-pip \
     chromium \
     chromium-chromedriver \
-    xvfb \
-    x11vnc \
-    xdpyinfo \
-    fluxbox \
-    wget \
-    tar \
     && ln -sf python3 /usr/bin/python
-
-# Install noVNC (pinned release — no git clone needed)
-RUN wget -qO /tmp/novnc.tar.gz https://github.com/novnc/noVNC/archive/refs/tags/v1.4.0.tar.gz \
-    && tar -xzf /tmp/novnc.tar.gz -C /opt \
-    && mv /opt/noVNC-1.4.0 /opt/noVNC \
-    && rm /tmp/novnc.tar.gz
-
-# Install websockify via pip (reliable, no git clone)
-RUN pip3 install --no-cache-dir --break-system-packages websockify
-
-# Auto-connect index page so visiting :6080 directly auto-connects
-RUN printf '<!DOCTYPE html><html><head><meta charset="utf-8"><title>VNC Viewer</title></head><body><script>var h=window.location.hostname,p=window.location.port;window.location.replace("http://"+h+":"+p+"/vnc.html?autoconnect=1&resize=scale&path=websockify");</script></body></html>' > /opt/noVNC/index.html
 
 # Setup backend
 WORKDIR /app
@@ -63,13 +45,8 @@ RUN chmod +x /usr/bin/chromedriver
 # Set environment variables
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 ENV NODE_ENV=production
-ENV DISPLAY=:99
 
-EXPOSE 4000 6080
-
-# Start script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+EXPOSE 4000
 
 WORKDIR /app/server
-CMD ["/start.sh"]
+CMD ["node", "server.js"]

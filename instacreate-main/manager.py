@@ -4,7 +4,9 @@ import argparse
 import sys
 import time
 import undetected_chromedriver as uc
+from selenium import webdriver as regular_webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -176,16 +178,19 @@ def launch_profile(name):
     
     chrome_options = Options()
     
+    # Get the debugging port (passed from server.js via env var)
+    debug_port = os.environ.get('CHROME_DEBUG_PORT', '0')
+    
     # Essential Docker options
     if IS_DOCKER:
+        chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--remote-debugging-port=9222")
-        # Ensure DISPLAY is set for Xvfb virtual display
-        display = os.environ.get('DISPLAY', ':99')
-        os.environ['DISPLAY'] = display
-        print(f"Info: Using DISPLAY={display}", file=sys.stderr)
+        if debug_port and debug_port != '0':
+            chrome_options.add_argument(f"--remote-debugging-port={debug_port}")
+            chrome_options.add_argument("--remote-debugging-address=0.0.0.0")
+        print(f"Info: Docker mode — headless with debug port {debug_port}", file=sys.stderr)
     
     # Profile isolation and data persistence
     chrome_options.add_argument(f"--user-data-dir={profile_data_path}")
@@ -243,27 +248,24 @@ def launch_profile(name):
             print(f"Error: Proxy setup failed: {e}", file=sys.stderr)
 
     try:
-        print(f"Info: Using chromedriver (auto-download if needed)", file=sys.stderr)
         print(f"Info: Profile data directory: {profile_data_path}", file=sys.stderr)
         
-        # In Docker/Linux, use the system Chromium binary since google-chrome is not installed
-        uc_kwargs = {
-            "options": chrome_options,
-            "use_subprocess": False,
-        }
         if IS_DOCKER:
-            # Alpine Linux installs chromium at /usr/bin/chromium-browser
+            # In Docker use regular selenium — undetected_chromedriver patching fails on Alpine musl
             chromium_paths = ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome']
             for cp in chromium_paths:
                 if os.path.exists(cp):
                     chrome_options.binary_location = cp
                     print(f"Info: Using Chrome binary: {cp}", file=sys.stderr)
                     break
-            # Use the system chromedriver directly — no auto-download needed
-            uc_kwargs["driver_executable_path"] = os.environ.get('CHROMEDRIVER_PATH', '/usr/bin/chromedriver')
-
-        # Let undetected-chromedriver auto-download the correct version (non-Docker)
-        driver = uc.Chrome(**uc_kwargs)
+            chromedriver_path = os.environ.get('CHROMEDRIVER_PATH', '/usr/bin/chromedriver')
+            service = ChromeService(executable_path=chromedriver_path)
+            driver = regular_webdriver.Chrome(service=service, options=chrome_options)
+            print(f"Info: Chrome (headless) started via regular selenium", file=sys.stderr)
+        else:
+            # On localhost use undetected_chromedriver for anti-detection
+            print(f"Info: Using undetected_chromedriver (auto-download if needed)", file=sys.stderr)
+            driver = uc.Chrome(options=chrome_options, use_subprocess=False)
         
         print(f"Info: Chrome driver initialized successfully", file=sys.stderr)
         
@@ -639,6 +641,7 @@ if __name__ == "__main__":
     # Command: launch
     parser_launch = subparsers.add_parser("launch", help="Launch a browser session for a specific profile.")
     parser_launch.add_argument("--name", required=True, help="The name of the profile to launch.")
+    parser_launch.add_argument("--debug-port", type=int, default=0, help="Chrome remote debugging port.")
 
     # Command: delete
     parser_delete = subparsers.add_parser("delete", help="Delete a profile and its data.")
@@ -667,6 +670,8 @@ if __name__ == "__main__":
             config["proxy"] = args.proxy
         create_profile(args.name, config)
     elif args.command == "launch":
+        if hasattr(args, 'debug_port') and args.debug_port:
+            os.environ['CHROME_DEBUG_PORT'] = str(args.debug_port)
         launch_profile(args.name)
     elif args.command == "delete":
         delete_profile(args.name)

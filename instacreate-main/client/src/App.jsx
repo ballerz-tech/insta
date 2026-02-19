@@ -11,7 +11,7 @@ import ImportExportModal from '../components/ImportExportModal';
 import ChangeProxyModal from '../components/ChangeProxyModal';
 import InstagramAutomationModal from '../components/InstagramAutomationModal';
 import ProfileOptionsModal from '../components/ProfileOptionsModal';
-import VNCViewerModal from '../components/VNCViewerModal';
+import BrowserViewerModal from '../components/BrowserViewerModal';
 import Groups from '../components/Groups';
 import Proxies from '../components/Proxies';
 import Analytics from '../components/Analytics';
@@ -39,8 +39,8 @@ function App() {
   const [selectedProfileConfig, setSelectedProfileConfig] = useState(null);
   const [currentPage, setCurrentPage] = useState('profiles');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isVncViewerOpen, setIsVncViewerOpen] = useState(false);
-  const [vncViewerProfile, setVncViewerProfile] = useState(null);
+  const [isBrowserViewerOpen, setIsBrowserViewerOpen] = useState(false);
+  const [browserViewerProfile, setBrowserViewerProfile] = useState(null);
 
   const fetchProfiles = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -323,11 +323,9 @@ function App() {
       headers: getAuthHeaders(),
       body: JSON.stringify({ name }),
     });
-    // In production (Docker/VPS), show the embedded noVNC viewer
-    if (process.env.NODE_ENV === 'production') {
-      setVncViewerProfile(name);
-      setIsVncViewerOpen(true);
-    }
+    // Open the browser viewer to show the remote Chrome session
+    setBrowserViewerProfile(name);
+    setIsBrowserViewerOpen(true);
     // Check for ban detection after 3 seconds
     setTimeout(() => {
       fetchProfiles();
@@ -736,10 +734,10 @@ function App() {
         userPermissions={user?.permissions || []}
       />
 
-      <VNCViewerModal
-        isOpen={isVncViewerOpen}
-        onClose={() => setIsVncViewerOpen(false)}
-        profileName={vncViewerProfile}
+      <BrowserViewerModal
+        isOpen={isBrowserViewerOpen}
+        onClose={() => setIsBrowserViewerOpen(false)}
+        profileName={browserViewerProfile}
       />
     </>
   );
